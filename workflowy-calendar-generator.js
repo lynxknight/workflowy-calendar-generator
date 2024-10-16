@@ -1,3 +1,28 @@
+let generatedCalendarContainer;
+let calendarOptions;
+
+window.onload = () => {
+  generatedCalendarContainer = document.getElementById("generated-calendar");
+  calendarOptions = document.getElementById("calendar-options");
+
+  calendarOptions.addEventListener("submit", function (event) {
+    event.preventDefault(); // Prevent the default form submission
+    console.log(event);
+    // Get the selected radio button value
+    const selectedOption = document.querySelector(
+      'input[name="calendar"]:checked'
+    );
+    if (selectedOption) {
+      const calendarValue = selectedOption.value;
+      console.log("Selected calendar option:", calendarValue);
+
+      // Here you can add logic to generate the calendar based on the selected option
+    } else {
+      console.log("No option selected");
+    }
+  });
+};
+
 //takes in date object. months are zero indexed which is super annoying and causes magic numbers in my code :/
 function buildWorkflowyDateObject(date) {
   return `<time 
@@ -105,7 +130,19 @@ const jsonOpmlStructure = {
   },
 };
 
-// Populate the OPML structure with dates
-populateOpml(jsonOpmlStructure, datesArray);
+function generate() {
+  populateOpml(jsonOpmlStructure, datesArray);
 
-console.log(opml.stringify(jsonOpmlStructure));
+  generatedCalendarContainer.innerText = opml.stringify(jsonOpmlStructure);
+}
+
+function copyToClipboard() {
+  navigator.clipboard
+    .writeText(generatedCalendarContainer.innerText)
+    .then(() => {
+      console.log("Text copied to clipboard!");
+    })
+    .catch((err) => {
+      console.error("Failed to copy text: ", err);
+    });
+}

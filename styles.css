@@ -1,4 +1,6 @@
-html {
-  background-color: #1e1e1e;
-  color: seashell;
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
 }
