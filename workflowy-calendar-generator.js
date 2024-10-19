@@ -1,58 +1,17 @@
 let generatedCalendarContainer;
-let calendarOptions;
+let calendarOptionsForm;
 
-window.onload = () => {
-  generatedCalendarContainer = document.getElementById("generated-calendar");
-  calendarOptions = document.getElementById("calendar-options");
-
-  calendarOptions.addEventListener("submit", function (event) {
-    event.preventDefault(); // Prevent the default form submission
-    console.log(event);
-    // Get the selected radio button value
-    const selectedOption = document.querySelector(
-      'input[name="calendar"]:checked'
-    );
-    if (selectedOption) {
-      const calendarValue = selectedOption.value;
-      console.log("Selected calendar option:", calendarValue);
-
-      // Here you can add logic to generate the calendar based on the selected option
-    } else {
-      console.log("No option selected");
-    }
-  });
+//structure we need to follow from opml.js
+const jsonOpmlStructure = {
+  opml: {
+    head: {},
+    body: {
+      subs: [], // Start with an empty array for years or whatever the root node is
+    },
+  },
 };
 
-//takes in date object. months are zero indexed which is super annoying and causes magic numbers in my code :/
-function buildWorkflowyDateObject(date) {
-  return `<time 
-    startYear="${date.getFullYear()}"
-    startMonth="${date.getMonth() + 1}" 
-    startDay="${date.getDate()}">date
-    </time>`;
-}
-
-// Function to get all dates for the year 2025
-function getYearDates(year) {
-  const yearDates = [];
-  const startDate = new Date(year, 0, 1); // January 1 of the specified year
-
-  // Loop through 365 days (considering 2025 is not a leap year)
-  for (let i = 0; i < 365; i++) {
-    const nextDate = new Date(startDate);
-    nextDate.setDate(startDate.getDate() + i);
-    yearDates.push(nextDate);
-  }
-
-  return yearDates;
-}
-
-//TODO: change this to accept a range of dates
-// Example array of Date objects for the year 2025
-const datesArray = getYearDates(2025); // Assume this function generates the Date objects
-
-// Mapping month index to month names
-const monthNames = [
+const MONTH_NAMES = [
   "January",
   "February",
   "March",
@@ -67,46 +26,121 @@ const monthNames = [
   "December",
 ];
 
-// Function to traverse and populate jsonOpmlStructure
-function populateOpml(jsonOpmlStructure, datesArray) {
-  const years = new Set(); // To collect unique years
+//grab our containers and set some event listeners that get our app functioning the way we want
+window.onload = () => {
+  generatedCalendarContainer = document.getElementById("generated-calendar");
+  calendarOptionsForm = document.getElementById("calendar-options");
 
-  // Collect unique years from the dates
+  calendarOptionsForm.addEventListener("submit", function (event) {
+    event.preventDefault(); // Prevent the default form submission to keep semantic html buttons
+  });
+};
+
+/**
+ *
+ * @param {Date} date
+ * @returns {string} - A string representation of the date object in the format of a Workflowy date object
+ */
+function buildWorkflowyDateObject(date) {
+  //months are zero indexed which is super annoying and causes magic numbers in my code :/
+  return `<time 
+    startYear="${date.getFullYear()}"
+    startMonth="${date.getMonth() + 1}" 
+    startDay="${date.getDate()}">date
+    </time>`;
+}
+
+//write a function that takes in two date objects, start date and end date. generates an array of date objects between the two dates, including the start date and end date
+
+/**
+ *
+ * @param {Date} startDate
+ * @param {Date} endDate
+ * @returns {Array<Date>} - An array of date objects between the start and end date
+ */
+function getDateRangeArray(startDate, endDate) {
+  const dateArray = [];
+  let currentDate = new Date(startDate);
+
+  if (endDate < startDate) {
+    alert("End date must be after start date");
+    return;
+  }
+
+  while (currentDate <= endDate) {
+    dateArray.push(new Date(currentDate));
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return dateArray;
+}
+
+/**
+ *
+ * @param {Object} jsonOpmlStructure
+ * @param {Array<Date>} datesArray
+ * @param {Object} calendarOptions
+ * @returns {void} - Populates the jsonOpmlStructure with the dates from the datesArray
+ */
+function populateYears(jsonOpmlStructure, datesArray, calendarOptions) {
+  const years = new Set(); // To collect unique years
   datesArray.forEach((date) => {
     years.add(date.getFullYear());
   });
 
-  // Create or update the year subs
   years.forEach((year) => {
-    const yearSubs = {
+    jsonOpmlStructure.opml.body.subs.push({
       level: "year",
-      text: year.toString(),
+      text: year,
       subs: [],
-    };
-
-    // Create a map to hold months and their days
-    const monthMap = {};
-
-    // Loop through the dates and group by month
-    datesArray.forEach((date) => {
-      if (date.getFullYear() === year) {
-        const monthIndex = date.getMonth();
-        const day = date.getDate();
-
-        // Initialize month if not already done
-        if (!monthMap[monthIndex]) {
-          monthMap[monthIndex] = {month: monthNames[monthIndex], days: []};
-        }
-
-        // Add the day to the corresponding month
-        monthMap[monthIndex].days.push(date);
-      }
     });
+  });
 
-    // Populate the year structure with months and their days
-    for (const monthIndex in monthMap) {
-      const monthData = monthMap[monthIndex];
-      yearSubs.subs.push({
+  if (!calendarOptions.month) {
+    const yearNode = jsonOpmlStructure.opml.body.subs.find(
+      (sub) => sub.level === "year"
+    );
+    yearNode.subs = datesArray.map((date) => ({
+      text: buildWorkflowyDateObject(date),
+    }));
+  }
+}
+
+/**
+ * @param {Object} jsonOpmlStructure
+ * @param {Array<Date>} datesArray
+ * @param {Object} calendarOptions
+ */
+function populateMonths(jsonOpmlStructure, datesArray, calendarOptions) {
+  const monthMap = {};
+  datesArray.forEach((date) => {
+    const monthIndex = date.getMonth();
+
+    // Initialize month if not already done
+    if (!monthMap[monthIndex]) {
+      monthMap[monthIndex] = {month: MONTH_NAMES[monthIndex], days: []};
+    }
+
+    // Add the day to the corresponding month
+    monthMap[monthIndex].days.push(date);
+  });
+
+  // Populate the year structure with months and their days
+  for (const monthIndex in monthMap) {
+    const monthData = monthMap[monthIndex];
+    if (calendarOptions.year) {
+      const yearNode = jsonOpmlStructure.opml.body.subs.find(
+        (sub) => sub.level === "year"
+      );
+      yearNode.subs.push({
+        level: "month",
+        text: monthData.month,
+        subs: monthData.days.map((day) => ({
+          text: buildWorkflowyDateObject(day),
+        })),
+      });
+    } else {
+      jsonOpmlStructure.opml.body.subs.push({
         level: "month",
         text: monthData.month,
         subs: monthData.days.map((day) => ({
@@ -114,28 +148,62 @@ function populateOpml(jsonOpmlStructure, datesArray) {
         })),
       });
     }
-
-    // Add the year structure to the main OPML body
-    jsonOpmlStructure.opml.body.subs.push(yearSubs);
-  });
+  }
 }
 
-// Given JSON structure
-const jsonOpmlStructure = {
-  opml: {
-    head: {},
-    body: {
-      subs: [], // Start with an empty array for years
-    },
-  },
-};
+/**
+ * @param {Object} jsonOpmlStructure
+ * @param {Array<Date>} datesArray
+ * @param {Object} calendarOptions
+ * @returns {void} - Populates the jsonOpmlStructure with the dates from the datesArray
+ */
+function populateOpml(jsonOpmlStructure, datesArray, calendarOptions) {
+  // Collect unique years from the dates
 
+  // Create or update the year subs
+  if (calendarOptions.year) {
+    populateYears(jsonOpmlStructure, datesArray, calendarOptions);
+  }
+
+  if (calendarOptions.month) {
+    populateMonths(jsonOpmlStructure, datesArray, calendarOptions);
+  }
+
+  if (!calendarOptions.year && !calendarOptions.month) {
+    jsonOpmlStructure.opml.body.subs = datesArray.map((date) => ({
+      text: buildWorkflowyDateObject(date),
+    }));
+  }
+}
+
+/**
+ * @returns {void} - Generates the calendar based on the form data
+ */
 function generate() {
-  populateOpml(jsonOpmlStructure, datesArray);
+  resetOpmlStructure(jsonOpmlStructure);
+  const formData = new FormData(calendarOptionsForm);
+
+  if (!formData.get("start-date") || !formData.get("end-date")) {
+    return;
+  }
+  //hack for local time zone
+  const startDate = new Date(`${formData.get("start-date")}T00:00:00`);
+  const endDate = new Date(`${formData.get("end-date")}T23:59:59`);
+  const datesArray = getDateRangeArray(startDate, endDate);
+
+  const calendarOptions = {
+    year: formData.get("year") === "true",
+    month: formData.get("month") === "true",
+  };
+
+  populateOpml(jsonOpmlStructure, datesArray, calendarOptions);
 
   generatedCalendarContainer.innerText = opml.stringify(jsonOpmlStructure);
 }
 
+/**
+ * @returns {void} - Copies the generated calendar to the clipboard
+ */
 function copyToClipboard() {
   navigator.clipboard
     .writeText(generatedCalendarContainer.innerText)
@@ -145,4 +213,8 @@ function copyToClipboard() {
     .catch((err) => {
       console.error("Failed to copy text: ", err);
     });
+}
+
+function resetOpmlStructure(jsonOpmlStructure) {
+  jsonOpmlStructure.opml.body.subs = [];
 }

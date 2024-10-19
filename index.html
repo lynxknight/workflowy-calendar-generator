@@ -1,125 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<script src="./opml.js"></script>
-        <script src="./workflowy-calendar-generator.js"></script>
-        
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
-        <link rel="stylesheet" href="./styles.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="./opml.js"></script>
+    <script src="./workflowy-calendar-generator.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css"
+    />
+    <link rel="stylesheet" href="./styles.css" />
     <title>Workflowy Calendar Generator</title>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Workflowy Calendar Generator 📆</h1>
-    <h2>Shortcuts</h2>
+    <div>
+      made with <span>&hearts;</span> by
+      <a href="https://github.com/fkscott/workflowy-calendar-generator"
+        >keagan &nearr;</a
+      >
+    </div>
+    <h2>Options</h2>
     <form id="calendar-options">
-        <label for="year-2025">Year 2025</label>
-        <input id="year-2025" type="radio" value="year-2025">
-        <input type="submit" value="Generate" onclick="generate()">
+      <h3>Date Range</h3>
+      <label for="start-date">
+        <input required type="date" id="start-date" name="start-date" />
+      </label>
+      through
+      <label for="end-date">
+        <input required type="date" id="end-date" name="end-date" />
+      </label>
+      <h3>Levels to Include</h3>
+      <div>
+        <label for="year">
+          <input id="year" name="year" type="checkbox" value="true" />
+          Year
+        </label>
+      </div>
+      <div>
+        <label for="month">
+          <input id="month" name="month" type="checkbox" value="true" />
+          Month
+        </label>
+      </div>
+      <input type="submit" value="Generate" onclick="generate()" />
     </form>
-
-    <h2>Advanced Options</h2>
-
+    <hr />
     <header class="row">
-        <h3>Paste this into Workflowy</h3>
+      <h3>Paste this into Workflowy</h3>
 
-        <button type="button" id="copy-button" onclick="copyToClipboard()"> <span id="copy-button-feedback"></span> Copy to clipboard </button>
+      <button type="button" id="copy-button" onclick="copyToClipboard()">
+        Copy to clipboard
+      </button>
     </header>
     <pre>
         <code id="generated-calendar">
-        &lt;?xml version="1.0" encoding="ISO-8859-1"?&gt;
-        &lt;opml version="2.0"&gt;
-            &lt;head&gt;
-                &lt;title&gt;States&lt;/title&gt;
-                &lt;dateCreated&gt;Sun, 31 Jan 2021 22:12:03 GMT&lt;/dateCreated&gt;
-                &lt;urlInstant&gt;http://instantoutliner.com/nk&lt;/urlInstant&gt;
-                &lt;urlPublic&gt;http://test.littleoutliner.com/davewiner/myOutlines/menubar.opml&lt;/urlPublic&gt;
-                &lt;longTitle&gt;&lt;/longTitle&gt;
-                &lt;description&gt;&lt;/description&gt;
-                &lt;someRandomValue&gt;527&lt;/someRandomValue&gt;
-                &lt;dateModified&gt;Tue, 21 Dec 2021 17:43:46 GMT&lt;/dateModified&gt;
-                &lt;expansionState&gt;1&lt;/expansionState&gt;
-                &lt;lastCursor&gt;0&lt;/lastCursor&gt;
-                &lt;ownerTwitterScreenName&gt;davewiner&lt;/ownerTwitterScreenName&gt;
-                &lt;ownerName&gt;Dave Winer&lt;/ownerName&gt;
-                &lt;ownerId&gt;http://twitter.com/davewiner&lt;/ownerId&gt;
-                &lt;urlUpdateSocket&gt;ws://drummer.scripting.com:1232/&lt;/urlUpdateSocket&gt;
-                &lt;ownerEmail&gt;dave.winer@gmail.com&lt;/ownerEmail&gt;
-                &lt;/head&gt;
-            &lt;body&gt;
-                &lt;outline text="United States" created="Tue, 21 Dec 2021 17:43:40 GMT" &gt;
-                    &lt;outline text="Far West" &gt;
-                        &lt;outline text="Alaska" /&gt;
-                        &lt;outline text="California" /&gt;
-                        &lt;outline text="Hawaii" /&gt;
-                        &lt;outline text="Nevada" /&gt;
-                        &lt;outline text="Oregon" /&gt;
-                        &lt;outline text="Washington" /&gt;
-                        &lt;/outline&gt;
-                    &lt;outline text="Great Plains" &gt;
-                        &lt;outline text="Kansas" /&gt;
-                        &lt;outline text="Nebraska" /&gt;
-                        &lt;outline text="North Dakota" /&gt;
-                        &lt;outline text="Oklahoma" /&gt;
-                        &lt;outline text="South Dakota" /&gt;
-                        &lt;/outline&gt;
-                    &lt;outline text="Mid-Atlantic" &gt;
-                        &lt;outline text="Delaware" /&gt;
-                        &lt;outline text="Maryland" /&gt;
-                        &lt;outline text="New Jersey" /&gt;
-                        &lt;outline text="New York" /&gt;
-                        &lt;outline text="Pennsylvania" /&gt;
-                        &lt;/outline&gt;
-                    &lt;outline text="Midwest" &gt;
-                        &lt;outline text="Illinois" /&gt;
-                        &lt;outline text="Indiana" /&gt;
-                        &lt;outline text="Iowa" /&gt;
-                        &lt;outline text="Kentucky" /&gt;
-                        &lt;outline text="Michigan" /&gt;
-                        &lt;outline text="Minnesota" /&gt;
-                        &lt;outline text="Missouri" /&gt;
-                        &lt;outline text="Ohio" /&gt;
-                        &lt;outline text="West Virginia" /&gt;
-                        &lt;outline text="Wisconsin" /&gt;
-                        &lt;/outline&gt;
-                    &lt;outline text="Mountains" &gt;
-                        &lt;outline text="Colorado" /&gt;
-                        &lt;outline text="Idaho" /&gt;
-                        &lt;outline text="Montana" /&gt;
-                        &lt;outline text="Utah" /&gt;
-                        &lt;outline text="Wyoming" /&gt;
-                        &lt;/outline&gt;
-                    &lt;outline text="New England" &gt;
-                        &lt;outline text="Connecticut" /&gt;
-                        &lt;outline text="Maine" /&gt;
-                        &lt;outline text="Massachusetts" /&gt;
-                        &lt;outline text="New Hampshire" /&gt;
-                        &lt;outline text="Rhode Island" /&gt;
-                        &lt;outline text="Vermont" /&gt;
-                        &lt;/outline&gt;
-                    &lt;outline text="South" &gt;
-                        &lt;outline text="Alabama" /&gt;
-                        &lt;outline text="Arkansas" /&gt;
-                        &lt;outline text="Florida" /&gt;
-                        &lt;outline text="Georgia" /&gt;
-                        &lt;outline text="Louisiana" /&gt;
-                        &lt;outline text="Mississippi" /&gt;
-                        &lt;outline text="North Carolina" /&gt;
-                        &lt;outline text="South Carolina" /&gt;
-                        &lt;outline text="Tennessee" /&gt;
-                        &lt;outline text="Virginia" /&gt;
-                        &lt;/outline&gt;
-                    &lt;outline text="Southwest" &gt;
-                        &lt;outline text="Arizona" /&gt;
-                        &lt;outline text="New Mexico" /&gt;
-                        &lt;outline text="Texas" /&gt;
-                        &lt;/outline&gt;
-                    &lt;/outline&gt;
-                &lt;/body&gt;
-            &lt;/opml&gt;
             </code>
         </pre>
-
-</body>
+  </body>
 </html>
