@@ -2,6 +2,7 @@ let generatedCalendarContainer;
 let calendarOptionsForm;
 let monthCheckbox;
 let weekCheckbox;
+
 //structure we need to follow from opml.js
 const jsonOpmlStructure = {
   opml: {
@@ -82,6 +83,23 @@ function buildWorkflowyDateObject(date) {
     </time>`;
 }
 
+/**
+ * @param {dayjs.Dayjs} startDate
+ * @param {dayjs.Dayjs} endDate
+ * @returns {string} - A string representation of a week range in workflowy
+ */
+
+function buildWorkflowyWeekRange(startDate, endDate) {
+  return `<time
+    startYear="${startDate.year()}"
+    startMonth="${startDate.month() + 1}"
+    startDay="${startDate.date()}"
+    endYear="${endDate.year()}"
+    endMonth="${endDate.month() + 1}"
+    endDay="${endDate.date()}">week range
+    </time>`;
+}
+
 //write a function that takes in two date objects, start date and end date. generates an array of date objects between the two dates, including the start date and end date
 
 /**
@@ -119,36 +137,6 @@ function getWeekStartingSunday(date) {
     date.day() === 0 ? date : date.subtract(date.day(), "day");
   return adjustedDate.week();
 }
-
-/**
- * Adds a week to the jsonOpmlStructure.
- * @param {number} year - The year of the week.
- * @param {number} week - The week number.
- * @param {Array<dayjs.Dayjs>} weekDates - The dates in the week.
- */
-jsonOpmlStructure.addWeek = function (year, week, weekDates) {
-  // Find the year node
-  let yearNode = this.opml.body.subs.find((sub) => sub.text === year);
-
-  // If the year node doesn't exist, create it
-  if (!yearNode) {
-    yearNode = {
-      level: "year",
-      text: year,
-      subs: [],
-    };
-    this.opml.body.subs.push(yearNode);
-  }
-
-  // Add the week node under the year node
-  yearNode.subs.push({
-    level: "week",
-    text: `Week ${week}`,
-    subs: weekDates.map((date) => ({
-      text: buildWorkflowyDateObject(date),
-    })),
-  });
-};
 
 /**
  * @param {Object} jsonOpmlStructure
@@ -202,6 +190,10 @@ function populateWeeks(jsonOpmlStructure, datesArray, calendarOptions) {
         yearNode.subs.push({
           level: "week",
           text: `Week ${week}`,
+          _note: buildWorkflowyWeekRange(
+            weekMap[year][week][0],
+            weekMap[year][week][weekMap[year][week].length - 1]
+          ),
           subs: weekMap[year][week].map((day) => ({
             text: buildWorkflowyDateObject(day),
           })),
@@ -212,6 +204,10 @@ function populateWeeks(jsonOpmlStructure, datesArray, calendarOptions) {
         jsonOpmlStructure.opml.body.subs.push({
           level: "week",
           text: `Week ${week}`,
+          _note: buildWorkflowyWeekRange(
+            weekMap[year][week][0],
+            weekMap[year][week][weekMap[year][week].length - 1]
+          ),
           subs: weekMap[year][week].map((day) => ({
             text: buildWorkflowyDateObject(day),
           })),
