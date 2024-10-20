@@ -43,6 +43,7 @@ window.onload = () => {
   monthCheckbox.addEventListener("change", disableWeeks);
 
   dayjs.extend(window.dayjs_plugin_isoWeek);
+  dayjs.extend(window.dayjs_plugin_weekOfYear);
 };
 
 function disableMonths() {
@@ -98,8 +99,8 @@ function getDateRangeArray(startDate, endDate) {
   }
 
   while (currentDate <= endDate) {
-    // Exclude December dates that are part of ISO week 1
-    if (!(currentDate.month() === 11 && currentDate.isoWeek() === 1)) {
+    // Exclude December dates that are part of week 1 of the next year
+    if (!(currentDate.month() === 11 && currentDate.week() === 1)) {
       dateArray.push(dayjs(currentDate));
     }
     currentDate = currentDate.add(1, "day");
@@ -118,7 +119,7 @@ function populateWeeks(jsonOpmlStructure, datesArray, calendarOptions) {
   const weekMap = {};
   datesArray.forEach((date) => {
     const year = date.year();
-    const week = date.isoWeek();
+    const week = date.week();
 
     // Initialize week if not already done
     if (!weekMap[year]) {
