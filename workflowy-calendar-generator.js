@@ -1,6 +1,5 @@
 let generatedCalendarContainer;
 let calendarOptionsForm;
-
 //structure we need to follow from opml.js
 const jsonOpmlStructure = {
   opml: {
@@ -44,9 +43,9 @@ window.onload = () => {
 function buildWorkflowyDateObject(date) {
   //months are zero indexed which is super annoying and causes magic numbers in my code :/
   return `<time 
-    startYear="${date.getFullYear()}"
-    startMonth="${date.getMonth() + 1}" 
-    startDay="${date.getDate()}">date
+    startYear="${date.year()}"
+    startMonth="${date.month() + 1}" 
+    startDay="${date.date()}">date
     </time>`;
 }
 
@@ -60,7 +59,7 @@ function buildWorkflowyDateObject(date) {
  */
 function getDateRangeArray(startDate, endDate) {
   const dateArray = [];
-  let currentDate = new Date(startDate);
+  let currentDate = dayjs(startDate);
 
   if (endDate < startDate) {
     alert("End date must be after start date");
@@ -68,8 +67,8 @@ function getDateRangeArray(startDate, endDate) {
   }
 
   while (currentDate <= endDate) {
-    dateArray.push(new Date(currentDate));
-    currentDate.setDate(currentDate.getDate() + 1);
+    dateArray.push(dayjs(currentDate));
+    currentDate = currentDate.add(1, "day");
   }
 
   return dateArray;
@@ -80,12 +79,12 @@ function getDateRangeArray(startDate, endDate) {
  * @param {Object} jsonOpmlStructure
  * @param {Array<Date>} datesArray
  * @param {Object} calendarOptions
- * @returns {void} - Populates the jsonOpmlStructure with the dates from the datesArray
+ * @returns {void} - Populates the jsonOpmlStructure with the unique from the datesArray
  */
 function populateYears(jsonOpmlStructure, datesArray, calendarOptions) {
   const years = new Set(); // To collect unique years
   datesArray.forEach((date) => {
-    years.add(date.getFullYear());
+    years.add(date.year());
   });
 
   years.forEach((year) => {
@@ -110,11 +109,12 @@ function populateYears(jsonOpmlStructure, datesArray, calendarOptions) {
  * @param {Object} jsonOpmlStructure
  * @param {Array<Date>} datesArray
  * @param {Object} calendarOptions
+ * @returns {void} - Populates the jsonOpmlStructure with the unique months from the datesArray
  */
 function populateMonths(jsonOpmlStructure, datesArray, calendarOptions) {
   const monthMap = {};
   datesArray.forEach((date) => {
-    const monthIndex = date.getMonth();
+    const monthIndex = date.month();
 
     // Initialize month if not already done
     if (!monthMap[monthIndex]) {
@@ -126,18 +126,28 @@ function populateMonths(jsonOpmlStructure, datesArray, calendarOptions) {
   });
 
   // Populate the year structure with months and their days
+  //this is cursed
   for (const monthIndex in monthMap) {
     const monthData = monthMap[monthIndex];
     if (calendarOptions.year) {
-      const yearNode = jsonOpmlStructure.opml.body.subs.find(
+      const yearNodes = jsonOpmlStructure.opml.body.subs.filter(
         (sub) => sub.level === "year"
       );
-      yearNode.subs.push({
-        level: "month",
-        text: monthData.month,
-        subs: monthData.days.map((day) => ({
-          text: buildWorkflowyDateObject(day),
-        })),
+      yearNodes.forEach((yearNode) => {
+        const year = parseInt(yearNode.text, 10);
+        const monthDaysForYear = monthData.days.filter(
+          (day) => day.year() === year
+        );
+
+        if (monthDaysForYear.length > 0) {
+          yearNode.subs.push({
+            level: "month",
+            text: monthData.month,
+            subs: monthDaysForYear.map((day) => ({
+              text: buildWorkflowyDateObject(day),
+            })),
+          });
+        }
       });
     } else {
       jsonOpmlStructure.opml.body.subs.push({
@@ -187,8 +197,8 @@ function generate() {
     return;
   }
   //hack for local time zone
-  const startDate = new Date(`${formData.get("start-date")}T00:00:00`);
-  const endDate = new Date(`${formData.get("end-date")}T23:59:59`);
+  const startDate = dayjs(`${formData.get("start-date")}T00:00:00`);
+  const endDate = dayjs(`${formData.get("end-date")}T23:59:59`);
   const datesArray = getDateRangeArray(startDate, endDate);
 
   const calendarOptions = {
