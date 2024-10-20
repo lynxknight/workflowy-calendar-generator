@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="./dayjs.min.js"></script>
+    <script src="./weekOfYear.min.js"></script>
     <script src="./opml.js"></script>
     <script src="./workflowy-calendar-generator.js"></script>
     <meta
@@ -56,6 +57,12 @@
         <label for="month">
           <input id="month" name="month" type="checkbox" value="true" />
           Month
+        </label>
+      </div>
+      <div>
+        <label for="week">
+          <input id="week" name="week" type="checkbox" value="true" />
+          Week
         </label>
       </div>
       <input type="submit" value="Generate" onclick="generate()" />

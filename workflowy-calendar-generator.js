@@ -1,5 +1,7 @@
 let generatedCalendarContainer;
 let calendarOptionsForm;
+let monthCheckbox;
+let weekCheckbox;
 //structure we need to follow from opml.js
 const jsonOpmlStructure = {
   opml: {
@@ -33,7 +35,37 @@ window.onload = () => {
   calendarOptionsForm.addEventListener("submit", function (event) {
     event.preventDefault(); // Prevent the default form submission to keep semantic html buttons
   });
+
+  weekCheckbox = document.getElementById("week");
+  monthCheckbox = document.getElementById("month");
+
+  weekCheckbox.addEventListener("change", disableMonths);
+  monthCheckbox.addEventListener("change", disableWeeks);
+
+  dayjs.extend(window.dayjs_plugin_weekOfYear);
 };
+
+function disableMonths() {
+  if (weekCheckbox.checked) {
+    monthCheckbox.checked = false;
+    monthCheckbox.disabled = true;
+    monthCheckbox.title = "Months are disabled when weeks are enabled";
+  } else {
+    monthCheckbox.disabled = false;
+    monthCheckbox.title = "";
+  }
+}
+
+function disableWeeks() {
+  if (monthCheckbox.checked) {
+    weekCheckbox.checked = false;
+    weekCheckbox.disabled = true;
+    weekCheckbox.title = "Weeks are disabled when months are enabled";
+  } else {
+    weekCheckbox.disabled = false;
+    weekCheckbox.title = "";
+  }
+}
 
 /**
  *
