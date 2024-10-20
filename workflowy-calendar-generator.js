@@ -42,7 +42,7 @@ window.onload = () => {
   weekCheckbox.addEventListener("change", disableMonths);
   monthCheckbox.addEventListener("change", disableWeeks);
 
-  dayjs.extend(window.dayjs_plugin_weekOfYear);
+  dayjs.extend(window.dayjs_plugin_isoWeek);
 };
 
 function disableMonths() {
@@ -84,7 +84,6 @@ function buildWorkflowyDateObject(date) {
 //write a function that takes in two date objects, start date and end date. generates an array of date objects between the two dates, including the start date and end date
 
 /**
- *
  * @param {Date} startDate
  * @param {Date} endDate
  * @returns {Array<Date>} - An array of date objects between the start and end date
@@ -99,11 +98,68 @@ function getDateRangeArray(startDate, endDate) {
   }
 
   while (currentDate <= endDate) {
-    dateArray.push(dayjs(currentDate));
+    // Exclude December dates that are part of ISO week 1
+    if (!(currentDate.month() === 11 && currentDate.isoWeek() === 1)) {
+      dateArray.push(dayjs(currentDate));
+    }
     currentDate = currentDate.add(1, "day");
   }
 
   return dateArray;
+}
+
+/**
+ * @param {Object} jsonOpmlStructure
+ * @param {Array<Date>} datesArray
+ * @param {Object} calendarOptions
+ * @returns {void} - Populates the jsonOpmlStructure with the unique weeks from the datesArray
+ */
+function populateWeeks(jsonOpmlStructure, datesArray, calendarOptions) {
+  const weekMap = {};
+  datesArray.forEach((date) => {
+    const year = date.year();
+    const week = date.isoWeek();
+
+    // Initialize week if not already done
+    if (!weekMap[year]) {
+      weekMap[year] = {};
+    }
+    if (!weekMap[year][week]) {
+      weekMap[year][week] = [];
+    }
+
+    // Add the day to the corresponding week
+    weekMap[year][week].push(date);
+  });
+
+  // Populate the year structure with weeks and their days
+  for (const year in weekMap) {
+    const yearNode = jsonOpmlStructure.opml.body.subs.find(
+      (sub) => sub.level === "year" && sub.text == year
+    );
+
+    if (yearNode) {
+      for (const week in weekMap[year]) {
+        yearNode.subs.push({
+          level: "week",
+          text: `Week ${week}`,
+          subs: weekMap[year][week].map((day) => ({
+            text: buildWorkflowyDateObject(day),
+          })),
+        });
+      }
+    } else {
+      for (const week in weekMap[year]) {
+        jsonOpmlStructure.opml.body.subs.push({
+          level: "week",
+          text: `Week ${week}`,
+          subs: weekMap[year][week].map((day) => ({
+            text: buildWorkflowyDateObject(day),
+          })),
+        });
+      }
+    }
+  }
 }
 
 /**
@@ -127,7 +183,7 @@ function populateYears(jsonOpmlStructure, datesArray, calendarOptions) {
     });
   });
 
-  if (!calendarOptions.month) {
+  if (!calendarOptions.month && !calendarOptions.week) {
     const yearNode = jsonOpmlStructure.opml.body.subs.find(
       (sub) => sub.level === "year"
     );
@@ -158,7 +214,6 @@ function populateMonths(jsonOpmlStructure, datesArray, calendarOptions) {
   });
 
   // Populate the year structure with months and their days
-  //this is cursed
   for (const monthIndex in monthMap) {
     const monthData = monthMap[monthIndex];
     if (calendarOptions.year) {
@@ -211,7 +266,15 @@ function populateOpml(jsonOpmlStructure, datesArray, calendarOptions) {
     populateMonths(jsonOpmlStructure, datesArray, calendarOptions);
   }
 
-  if (!calendarOptions.year && !calendarOptions.month) {
+  if (calendarOptions.week && !calendarOptions.month) {
+    populateWeeks(jsonOpmlStructure, datesArray, calendarOptions);
+  }
+
+  if (
+    !calendarOptions.year &&
+    !calendarOptions.month &&
+    !calendarOptions.week
+  ) {
     jsonOpmlStructure.opml.body.subs = datesArray.map((date) => ({
       text: buildWorkflowyDateObject(date),
     }));
@@ -236,6 +299,7 @@ function generate() {
   const calendarOptions = {
     year: formData.get("year") === "true",
     month: formData.get("month") === "true",
+    week: formData.get("week") === "true",
   };
 
   populateOpml(jsonOpmlStructure, datesArray, calendarOptions);
