@@ -40,34 +40,9 @@ window.onload = () => {
   weekCheckbox = document.getElementById("week");
   monthCheckbox = document.getElementById("month");
 
-  weekCheckbox.addEventListener("change", disableMonths);
-  monthCheckbox.addEventListener("change", disableWeeks);
-
   dayjs.extend(window.dayjs_plugin_isoWeek);
   dayjs.extend(window.dayjs_plugin_weekOfYear);
 };
-
-function disableMonths() {
-  if (weekCheckbox.checked) {
-    monthCheckbox.checked = false;
-    monthCheckbox.disabled = true;
-    monthCheckbox.title = "Months are disabled when weeks are enabled";
-  } else {
-    monthCheckbox.disabled = false;
-    monthCheckbox.title = "";
-  }
-}
-
-function disableWeeks() {
-  if (monthCheckbox.checked) {
-    weekCheckbox.checked = false;
-    weekCheckbox.disabled = true;
-    weekCheckbox.title = "Weeks are disabled when months are enabled";
-  } else {
-    weekCheckbox.disabled = false;
-    weekCheckbox.title = "";
-  }
-}
 
 /**
  *
@@ -117,243 +92,79 @@ function getDateRangeArray(startDate, endDate) {
   }
 
   while (currentDate <= endDate) {
-    // Exclude December dates that are part of week 1 of the next year
-    if (!(currentDate.month() === 11 && currentDate.week() === 1)) {
-      dateArray.push(dayjs(currentDate));
-    }
     currentDate = currentDate.add(1, "day");
+    dateArray.push(dayjs(currentDate));
   }
 
   return dateArray;
 }
 
-/**
- * @param {dayjs.Dayjs} date
- * @returns {number} - The week number starting on Sunday
- */
-function getWeekStartingSunday(date) {
-  // Adjust the date to the previous Sunday
-  const adjustedDate =
-    date.day() === 0 ? date : date.subtract(date.day(), "day");
-  return adjustedDate.week();
-}
-
-/**
- * @param {Object} jsonOpmlStructure
- * @param {Array<Date>} datesArray
- * @param {Object} calendarOptions
- * @returns {void} - Populates the jsonOpmlStructure with the unique weeks from the datesArray
- */
-function populateWeeks(jsonOpmlStructure, datesArray, calendarOptions) {
-  const weekMap = {};
+function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
   datesArray.forEach((date) => {
-    const year = date.year();
-    const week = getWeekStartingSunday(date);
+    let yearNode, monthNode, weekNode;
 
-    // Initialize week if not already done
-    if (!weekMap[year]) {
-      weekMap[year] = {};
-    }
-    if (!weekMap[year][week]) {
-      weekMap[year][week] = [];
-    }
-
-    // Add the day to the corresponding week
-    weekMap[year][week].push(date);
-  });
-
-  // Check for remaining days in December after week 52 and add them to week 53
-  for (const year in weekMap) {
-    const lastWeek = Math.max(...Object.keys(weekMap[year]).map(Number));
-    const lastWeekDates = weekMap[year][lastWeek];
-    const lastDate = lastWeekDates[lastWeekDates.length - 1];
-
-    if (lastDate.month() === 11 && lastDate.date() < 31) {
-      const remainingDays = [];
-      let currentDate = lastDate.add(1, "day");
-      while (currentDate.month() === 11) {
-        remainingDays.push(currentDate);
-        currentDate = currentDate.add(1, "day");
-      }
-      weekMap[year][53] = remainingDays;
-    }
-  }
-
-  // Populate the year structure with weeks and their days
-  for (const year in weekMap) {
-    const yearNode = jsonOpmlStructure.opml.body.subs.find(
-      (sub) => sub.level === "year" && sub.text == year
-    );
-
-    if (yearNode) {
-      for (const week in weekMap[year]) {
-        yearNode.subs.push({
-          level: "week",
-          text: `Week ${week}`,
-          _note: buildWorkflowyWeekRange(
-            weekMap[year][week][0],
-            weekMap[year][week][weekMap[year][week].length - 1]
-          ),
-          subs: weekMap[year][week].map((day) => ({
-            text: buildWorkflowyDateObject(day),
-          })),
-        });
-      }
-    } else {
-      for (const week in weekMap[year]) {
-        jsonOpmlStructure.opml.body.subs.push({
-          level: "week",
-          text: `Week ${week}`,
-          _note: buildWorkflowyWeekRange(
-            weekMap[year][week][0],
-            weekMap[year][week][weekMap[year][week].length - 1]
-          ),
-          subs: weekMap[year][week].map((day) => ({
-            text: buildWorkflowyDateObject(day),
-          })),
-        });
+    if (calendarOptions.year) {
+      yearNode = jsonOpmlStructure.opml.body.subs.find(
+        (node) => node.text === date.year().toString()
+      );
+      if (!yearNode) {
+        yearNode = {text: date.year().toString(), subs: []};
+        jsonOpmlStructure.opml.body.subs.push(yearNode);
       }
     }
-  }
-}
 
-/**
- * @param {Object} jsonOpmlStructure
- * @param {Array<Date>} datesArray
- * @param {Object} calendarOptions
- * @returns {void} - Populates the jsonOpmlStructure with the unique years from the datesArray
- */
-function populateYears(jsonOpmlStructure, datesArray, calendarOptions) {
-  const years = new Set(); // To collect unique years
-  datesArray.forEach((date) => {
-    years.add(date.year());
+    if (calendarOptions.month) {
+      monthNode = (
+        yearNode ? yearNode.subs : jsonOpmlStructure.opml.body.subs
+      ).find((node) => node.text === MONTH_NAMES[date.month()]);
+      if (!monthNode) {
+        monthNode = {text: MONTH_NAMES[date.month()], subs: []};
+        (yearNode ? yearNode.subs : jsonOpmlStructure.opml.body.subs).push(
+          monthNode
+        );
+      }
+    }
+
+    if (calendarOptions.week) {
+      const startOfWeek = date.startOf("week");
+      const endOfWeek = date.endOf("week");
+
+      // Handle edge case where week crosses into the next year
+      //if the week is the first week of the year, but our date is still in the previous year, push the date into the next year node
+      if (startOfWeek.year() !== date.year()) {
+        yearNode = jsonOpmlStructure.opml.body.subs.find(
+          (node) => node.text === startOfWeek.year().toString()
+        );
+        if (!yearNode) {
+          yearNode = {text: startOfWeek.year().toString(), subs: []};
+          jsonOpmlStructure.opml.body.subs.push(yearNode);
+        }
+      }
+
+      const weekRange = buildWorkflowyWeekRange(startOfWeek, endOfWeek);
+      const weekLabel = `Week ${startOfWeek.week()}`;
+      weekNode = (
+        monthNode
+          ? monthNode.subs
+          : yearNode
+          ? yearNode.subs
+          : jsonOpmlStructure.opml.body.subs
+      ).find((node) => node.text === weekLabel);
+      if (!weekNode) {
+        weekNode = {text: weekLabel, _note: weekRange, subs: []};
+        (monthNode
+          ? monthNode.subs
+          : yearNode
+          ? yearNode.subs
+          : jsonOpmlStructure.opml.body.subs
+        ).push(weekNode);
+      }
+    }
+
+    const targetNode =
+      weekNode || monthNode || yearNode || jsonOpmlStructure.opml.body;
+    targetNode.subs.push({text: buildWorkflowyDateObject(date)});
   });
-
-  years.forEach((year) => {
-    // Check if the year node already exists
-    let yearNode = jsonOpmlStructure.opml.body.subs.find(
-      (sub) => sub.text === year
-    );
-    if (!yearNode) {
-      jsonOpmlStructure.opml.body.subs.push({
-        level: "year",
-        text: year,
-        subs: [],
-      });
-    }
-  });
-
-  if (!calendarOptions.month && !calendarOptions.week) {
-    const yearNode = jsonOpmlStructure.opml.body.subs.find(
-      (sub) => sub.level === "year"
-    );
-    yearNode.subs = datesArray.map((date) => ({
-      text: buildWorkflowyDateObject(date),
-    }));
-  }
-}
-
-/**
- * @param {Object} jsonOpmlStructure
- * @param {Array<Date>} datesArray
- * @param {Object} calendarOptions
- * @returns {void} - Populates the jsonOpmlStructure with the unique months from the datesArray
- */
-function populateMonths(jsonOpmlStructure, datesArray, calendarOptions) {
-  const monthMap = {};
-  datesArray.forEach((date) => {
-    const monthIndex = date.month();
-    const year = date.year();
-
-    // Initialize month if not already done
-    if (!monthMap[year]) {
-      monthMap[year] = {};
-    }
-    if (!monthMap[year][monthIndex]) {
-      monthMap[year][monthIndex] = [];
-    }
-
-    monthMap[year][monthIndex].push(date);
-  });
-
-  // Populate jsonOpmlStructure with monthMap data
-  for (const year in monthMap) {
-    for (const month in monthMap[year]) {
-      const monthDates = monthMap[year][month];
-      jsonOpmlStructure.addMonth(year, month, monthDates);
-    }
-  }
-}
-/**
- * Adds a month to the jsonOpmlStructure.
- * @param {number} year - The year of the month.
- * @param {number} month - The month number.
- * @param {Array<dayjs.Dayjs>} monthDates - The dates in the month.
- */
-jsonOpmlStructure.addMonth = function (year, month, monthDates) {
-  // Find the year node
-  let yearNode = this.opml.body.subs.find((sub) => sub.text === year);
-
-  // If the year node doesn't exist, create it
-  if (!yearNode) {
-    yearNode = {
-      level: "year",
-      text: year,
-      subs: [],
-    };
-    this.opml.body.subs.push(yearNode);
-  }
-
-  // Check if the month node already exists under the year node
-  let monthNode = yearNode.subs.find((sub) => sub.text === MONTH_NAMES[month]);
-
-  // If the month node doesn't exist, create it
-  if (!monthNode) {
-    monthNode = {
-      level: "month",
-      text: MONTH_NAMES[month],
-      subs: [],
-    };
-    yearNode.subs.push(monthNode);
-  }
-
-  // Add the dates to the month node
-  monthNode.subs = monthDates.map((date) => ({
-    text: buildWorkflowyDateObject(date),
-  }));
-};
-
-/**
- * @param {Object} jsonOpmlStructure
- * @param {Array<Date>} datesArray
- * @param {Object} calendarOptions
- * @returns {void} - Populates the jsonOpmlStructure with the dates from the datesArray
- */
-function populateOpml(jsonOpmlStructure, datesArray, calendarOptions) {
-  // Collect unique years from the dates
-
-  // Create or update the year subs
-  if (calendarOptions.year && !calendarOptions.month) {
-    populateYears(jsonOpmlStructure, datesArray, calendarOptions);
-  }
-
-  if (calendarOptions.month) {
-    populateMonths(jsonOpmlStructure, datesArray, calendarOptions);
-  }
-
-  if (calendarOptions.week && !calendarOptions.month) {
-    populateWeeks(jsonOpmlStructure, datesArray, calendarOptions);
-  }
-
-  if (
-    !calendarOptions.year &&
-    !calendarOptions.month &&
-    !calendarOptions.week
-  ) {
-    jsonOpmlStructure.opml.body.subs = datesArray.map((date) => ({
-      text: buildWorkflowyDateObject(date),
-    }));
-  }
 }
 /**
  * @returns {void} - Generates the calendar based on the form data
@@ -376,7 +187,7 @@ function generate() {
     week: formData.get("week") === "true",
   };
 
-  populateOpml(jsonOpmlStructure, datesArray, calendarOptions);
+  buildOpml(jsonOpmlStructure, datesArray, calendarOptions);
 
   generatedCalendarContainer.innerText = opml.stringify(jsonOpmlStructure);
 }
