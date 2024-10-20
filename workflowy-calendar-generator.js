@@ -110,6 +110,47 @@ function getDateRangeArray(startDate, endDate) {
 }
 
 /**
+ * @param {dayjs.Dayjs} date
+ * @returns {number} - The week number starting on Sunday
+ */
+function getWeekStartingSunday(date) {
+  // Adjust the date to the previous Sunday
+  const adjustedDate =
+    date.day() === 0 ? date : date.subtract(date.day(), "day");
+  return adjustedDate.week();
+}
+
+/**
+ * Adds a week to the jsonOpmlStructure.
+ * @param {number} year - The year of the week.
+ * @param {number} week - The week number.
+ * @param {Array<dayjs.Dayjs>} weekDates - The dates in the week.
+ */
+jsonOpmlStructure.addWeek = function (year, week, weekDates) {
+  // Find the year node
+  let yearNode = this.opml.body.subs.find((sub) => sub.text === year);
+
+  // If the year node doesn't exist, create it
+  if (!yearNode) {
+    yearNode = {
+      level: "year",
+      text: year,
+      subs: [],
+    };
+    this.opml.body.subs.push(yearNode);
+  }
+
+  // Add the week node under the year node
+  yearNode.subs.push({
+    level: "week",
+    text: `Week ${week}`,
+    subs: weekDates.map((date) => ({
+      text: buildWorkflowyDateObject(date),
+    })),
+  });
+};
+
+/**
  * @param {Object} jsonOpmlStructure
  * @param {Array<Date>} datesArray
  * @param {Object} calendarOptions
@@ -119,7 +160,7 @@ function populateWeeks(jsonOpmlStructure, datesArray, calendarOptions) {
   const weekMap = {};
   datesArray.forEach((date) => {
     const year = date.year();
-    const week = date.week();
+    const week = getWeekStartingSunday(date);
 
     // Initialize week if not already done
     if (!weekMap[year]) {
@@ -132,6 +173,23 @@ function populateWeeks(jsonOpmlStructure, datesArray, calendarOptions) {
     // Add the day to the corresponding week
     weekMap[year][week].push(date);
   });
+
+  // Check for remaining days in December after week 52 and add them to week 53
+  for (const year in weekMap) {
+    const lastWeek = Math.max(...Object.keys(weekMap[year]).map(Number));
+    const lastWeekDates = weekMap[year][lastWeek];
+    const lastDate = lastWeekDates[lastWeekDates.length - 1];
+
+    if (lastDate.month() === 11 && lastDate.date() < 31) {
+      const remainingDays = [];
+      let currentDate = lastDate.add(1, "day");
+      while (currentDate.month() === 11) {
+        remainingDays.push(currentDate);
+        currentDate = currentDate.add(1, "day");
+      }
+      weekMap[year][53] = remainingDays;
+    }
+  }
 
   // Populate the year structure with weeks and their days
   for (const year in weekMap) {
@@ -164,11 +222,10 @@ function populateWeeks(jsonOpmlStructure, datesArray, calendarOptions) {
 }
 
 /**
- *
  * @param {Object} jsonOpmlStructure
  * @param {Array<Date>} datesArray
  * @param {Object} calendarOptions
- * @returns {void} - Populates the jsonOpmlStructure with the unique from the datesArray
+ * @returns {void} - Populates the jsonOpmlStructure with the unique years from the datesArray
  */
 function populateYears(jsonOpmlStructure, datesArray, calendarOptions) {
   const years = new Set(); // To collect unique years
@@ -204,50 +261,57 @@ function populateMonths(jsonOpmlStructure, datesArray, calendarOptions) {
   const monthMap = {};
   datesArray.forEach((date) => {
     const monthIndex = date.month();
+    const year = date.year();
 
     // Initialize month if not already done
-    if (!monthMap[monthIndex]) {
-      monthMap[monthIndex] = {month: MONTH_NAMES[monthIndex], days: []};
+    if (!monthMap[year]) {
+      monthMap[year] = {};
+    }
+    if (!monthMap[year][monthIndex]) {
+      monthMap[year][monthIndex] = [];
     }
 
-    // Add the day to the corresponding month
-    monthMap[monthIndex].days.push(date);
+    monthMap[year][monthIndex].push(date);
   });
 
-  // Populate the year structure with months and their days
-  for (const monthIndex in monthMap) {
-    const monthData = monthMap[monthIndex];
-    if (calendarOptions.year) {
-      const yearNodes = jsonOpmlStructure.opml.body.subs.filter(
-        (sub) => sub.level === "year"
-      );
-      yearNodes.forEach((yearNode) => {
-        const year = parseInt(yearNode.text, 10);
-        const monthDaysForYear = monthData.days.filter(
-          (day) => day.year() === year
-        );
-
-        if (monthDaysForYear.length > 0) {
-          yearNode.subs.push({
-            level: "month",
-            text: monthData.month,
-            subs: monthDaysForYear.map((day) => ({
-              text: buildWorkflowyDateObject(day),
-            })),
-          });
-        }
-      });
-    } else {
-      jsonOpmlStructure.opml.body.subs.push({
-        level: "month",
-        text: monthData.month,
-        subs: monthData.days.map((day) => ({
-          text: buildWorkflowyDateObject(day),
-        })),
-      });
+  // Populate jsonOpmlStructure with monthMap data
+  for (const year in monthMap) {
+    for (const month in monthMap[year]) {
+      const monthDates = monthMap[year][month];
+      jsonOpmlStructure.addMonth(year, month, monthDates);
     }
   }
 }
+
+/**
+ * Adds a month to the jsonOpmlStructure.
+ * @param {number} year - The year of the month.
+ * @param {number} month - The month number.
+ * @param {Array<dayjs.Dayjs>} monthDates - The dates in the month.
+ */
+jsonOpmlStructure.addMonth = function (year, month, monthDates) {
+  // Find the year node
+  let yearNode = this.opml.body.subs.find((sub) => sub.text === year);
+
+  // If the year node doesn't exist, create it
+  if (!yearNode) {
+    yearNode = {
+      level: "year",
+      text: year,
+      subs: [],
+    };
+    this.opml.body.subs.push(yearNode);
+  }
+
+  // Add the month node under the year node
+  yearNode.subs.push({
+    level: "month",
+    text: `Month ${month + 1}`,
+    subs: monthDates.map((date) => ({
+      text: buildWorkflowyDateObject(date),
+    })),
+  });
+};
 
 /**
  * @param {Object} jsonOpmlStructure
