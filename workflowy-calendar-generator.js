@@ -234,11 +234,17 @@ function populateYears(jsonOpmlStructure, datesArray, calendarOptions) {
   });
 
   years.forEach((year) => {
-    jsonOpmlStructure.opml.body.subs.push({
-      level: "year",
-      text: year,
-      subs: [],
-    });
+    // Check if the year node already exists
+    let yearNode = jsonOpmlStructure.opml.body.subs.find(
+      (sub) => sub.text === year
+    );
+    if (!yearNode) {
+      jsonOpmlStructure.opml.body.subs.push({
+        level: "year",
+        text: year,
+        subs: [],
+      });
+    }
   });
 
   if (!calendarOptions.month && !calendarOptions.week) {
@@ -282,7 +288,6 @@ function populateMonths(jsonOpmlStructure, datesArray, calendarOptions) {
     }
   }
 }
-
 /**
  * Adds a month to the jsonOpmlStructure.
  * @param {number} year - The year of the month.
@@ -303,14 +308,23 @@ jsonOpmlStructure.addMonth = function (year, month, monthDates) {
     this.opml.body.subs.push(yearNode);
   }
 
-  // Add the month node under the year node
-  yearNode.subs.push({
-    level: "month",
-    text: `Month ${month + 1}`,
-    subs: monthDates.map((date) => ({
-      text: buildWorkflowyDateObject(date),
-    })),
-  });
+  // Check if the month node already exists under the year node
+  let monthNode = yearNode.subs.find((sub) => sub.text === MONTH_NAMES[month]);
+
+  // If the month node doesn't exist, create it
+  if (!monthNode) {
+    monthNode = {
+      level: "month",
+      text: MONTH_NAMES[month],
+      subs: [],
+    };
+    yearNode.subs.push(monthNode);
+  }
+
+  // Add the dates to the month node
+  monthNode.subs = monthDates.map((date) => ({
+    text: buildWorkflowyDateObject(date),
+  }));
 };
 
 /**
@@ -323,7 +337,7 @@ function populateOpml(jsonOpmlStructure, datesArray, calendarOptions) {
   // Collect unique years from the dates
 
   // Create or update the year subs
-  if (calendarOptions.year) {
+  if (calendarOptions.year && !calendarOptions.month) {
     populateYears(jsonOpmlStructure, datesArray, calendarOptions);
   }
 
@@ -345,7 +359,6 @@ function populateOpml(jsonOpmlStructure, datesArray, calendarOptions) {
     }));
   }
 }
-
 /**
  * @returns {void} - Generates the calendar based on the form data
  */
