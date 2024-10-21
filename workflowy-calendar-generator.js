@@ -40,7 +40,6 @@ window.onload = () => {
   weekCheckbox = document.getElementById("week");
   monthCheckbox = document.getElementById("month");
 
-  dayjs.extend(window.dayjs_plugin_isoWeek);
   dayjs.extend(window.dayjs_plugin_weekOfYear);
 };
 
@@ -84,16 +83,16 @@ function buildWorkflowyWeekRange(startDate, endDate) {
  */
 function getDateRangeArray(startDate, endDate) {
   const dateArray = [];
-  let currentDate = dayjs(startDate);
 
   if (endDate < startDate) {
     alert("End date must be after start date");
     return;
   }
 
-  while (currentDate <= endDate) {
+  let currentDate = dayjs(startDate);
+  while (currentDate < endDate) {
+    dateArray.push(currentDate);
     currentDate = currentDate.add(1, "day");
-    dateArray.push(dayjs(currentDate));
   }
 
   return dateArray;
@@ -129,20 +128,41 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
       const startOfWeek = date.startOf("week");
       const endOfWeek = date.endOf("week");
 
-      // Handle edge case where week crosses into the next year
-      //if the week is the first week of the year, but our date is still in the previous year, push the date into the next year node
-      if (startOfWeek.year() !== date.year()) {
-        yearNode = jsonOpmlStructure.opml.body.subs.find(
-          (node) => node.text === startOfWeek.year().toString()
-        );
-        if (!yearNode) {
-          yearNode = {text: startOfWeek.year().toString(), subs: []};
-          jsonOpmlStructure.opml.body.subs.push(yearNode);
-        }
-      }
-
       const weekRange = buildWorkflowyWeekRange(startOfWeek, endOfWeek);
       const weekLabel = `Week ${startOfWeek.week()}`;
+
+      //strange and opinionated edge case
+      if (date.year() !== endOfWeek.year() && calendarOptions.year) {
+        let nextYearNode = jsonOpmlStructure.opml.body.subs.find(
+          (node) => node.text === endOfWeek.year().toString()
+        );
+        if (!nextYearNode) {
+          nextYearNode = {text: endOfWeek.year().toString(), subs: []};
+          jsonOpmlStructure.opml.body.subs.push(nextYearNode);
+        }
+
+        yearNode = nextYearNode;
+
+        if (calendarOptions.month) {
+          monthNode = yearNode.subs.find(
+            (node) => node.text === MONTH_NAMES[endOfWeek.month()]
+          );
+          if (!monthNode) {
+            monthNode = {text: MONTH_NAMES[endOfWeek.month()], subs: []};
+            yearNode.subs.push(monthNode);
+          }
+        }
+      } else if (date.month() !== endOfWeek.month() && calendarOptions.month) {
+        let nextMonthNode = yearNode.subs.find(
+          (node) => node.text === MONTH_NAMES[endOfWeek.month()]
+        );
+        if (!nextMonthNode) {
+          nextMonthNode = {text: MONTH_NAMES[endOfWeek.month()], subs: []};
+          yearNode.subs.push(nextMonthNode);
+        }
+
+        monthNode = nextMonthNode;
+      }
       weekNode = (
         monthNode
           ? monthNode.subs
