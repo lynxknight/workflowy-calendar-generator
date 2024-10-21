@@ -171,7 +171,11 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
           : jsonOpmlStructure.opml.body.subs
       ).find((node) => node.text === weekLabel);
       if (!weekNode) {
-        weekNode = {text: weekLabel, _note: weekRange, subs: []};
+        weekNode = {
+          text: weekLabel,
+          _note: calendarOptions.weekRange ? weekRange : "",
+          subs: [],
+        };
         (monthNode
           ? monthNode.subs
           : yearNode
@@ -205,6 +209,7 @@ function generate() {
     year: formData.get("year") === "true",
     month: formData.get("month") === "true",
     week: formData.get("week") === "true",
+    weekRange: formData.get("week-range") === "true",
   };
 
   buildOpml(jsonOpmlStructure, datesArray, calendarOptions);
