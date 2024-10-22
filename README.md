@@ -1,6 +1,6 @@
 # Workflowy Calendar Generator 📆
 
-Generate a calendar structure with Workflowy dates. Options include a node for the year, the month, and the option to select what range of dates you want to generate. [Click here to try it out!](https://www.workflowy-calendar-generator.com/)
+Generate a calendar structure with Workflowy dates. Options include the range of dates, and headings for each Year, Month, or Week thats included in the selected date range. [Click here to try it out!](https://www.workflowy-calendar-generator.com/)
 
 ![](./media/wf-calendar-demo.gif)
 

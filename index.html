@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="./dayjs.min.js"></script>
+    <script src="./weekOfYear.min.js"></script>
     <script src="./opml.js"></script>
     <script src="./workflowy-calendar-generator.js"></script>
     <meta
@@ -45,7 +46,37 @@
       <label for="end-date">
         <input required type="date" id="end-date" name="end-date" />
       </label>
-      <h3>Levels to Include</h3>
+      <h3>Headings to Include</h3>
+      <details>
+        <summary>What do these options mean?</summary>
+        <p>
+          Each option represents one heading of your calendar. Dates that fall
+          under that specific year, month, or week will be placed under that
+          heading. Below is an eample with all heading selected.
+
+          <br />
+          <br />
+          <img
+            src="./img/example1.png"
+            alt="Calendar example after all options are selected"
+          />
+          <br />
+          <br />
+
+          "Show week range" adds a Workflowy date range with that week's start
+          and end dates as a note under the week heading.
+          <em
+            >Please note that sometimes a date from one month will be placed in
+            the next month's node if the week crosses over.</em
+          >
+          <br />
+          <br />
+          <img
+            src="./img/example2.png"
+            alt="Calendar example with week range enabled, and dates that cross over"
+          />
+        </p>
+      </details>
       <div>
         <label for="year">
           <input id="year" name="year" type="checkbox" value="true" />
@@ -58,6 +89,25 @@
           Month
         </label>
       </div>
+      <div>
+        <label for="week">
+          <input id="week" name="week" type="checkbox" value="true" />
+          Week
+        </label>
+      </div>
+      <div>
+        <label for="week-range">
+          <input
+            id="week-range"
+            name="week-range"
+            type="checkbox"
+            value="true"
+            title="Show the week range in the note"
+          />
+          Week start and end date as note under week heading
+        </label>
+      </div>
+
       <input type="submit" value="Generate" onclick="generate()" />
     </form>
     <hr />
