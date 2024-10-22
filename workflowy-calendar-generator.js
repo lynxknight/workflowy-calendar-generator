@@ -161,7 +161,11 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
             yearNode.subs.push(monthNode);
           }
         }
-      } else if (date.month() !== endOfWeek.month() && calendarOptions.month) {
+      } else if (
+        date.month() !== endOfWeek.month() &&
+        calendarOptions.month &&
+        yearNode
+      ) {
         let nextMonthNode = yearNode.subs.find(
           (node) => node.text === MONTH_NAMES[endOfWeek.month()]
         );
