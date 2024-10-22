@@ -41,6 +41,7 @@ window.onload = () => {
   monthCheckbox = document.getElementById("month");
 
   dayjs.extend(window.dayjs_plugin_weekOfYear);
+  dayjs.extend(window.dayjs_plugin_isoWeek);
 };
 
 /**
@@ -125,11 +126,19 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
     }
 
     if (calendarOptions.week) {
-      const startOfWeek = date.startOf("week");
-      const endOfWeek = date.endOf("week");
+      let startOfWeek = calendarOptions.startWeekOnMonday
+        ? date.startOf("isoWeek")
+        : date.startOf("week");
+      let endOfWeek = calendarOptions.startWeekOnMonday
+        ? date.endOf("isoWeek")
+        : date.endOf("week");
 
       const weekRange = buildWorkflowyWeekRange(startOfWeek, endOfWeek);
-      const weekLabel = `Week ${startOfWeek.week()}`;
+      const weekLabel = `Week ${
+        calendarOptions.startWeekOnMonday
+          ? startOfWeek.isoWeek()
+          : startOfWeek.week()
+      }`;
 
       //strange and opinionated edge case
       if (date.year() !== endOfWeek.year() && calendarOptions.year) {
@@ -210,6 +219,7 @@ function generate() {
     month: formData.get("month") === "true",
     week: formData.get("week") === "true",
     weekRange: formData.get("week-range") === "true",
+    startWeekOnMonday: formData.get("week-start") === "monday",
   };
 
   buildOpml(jsonOpmlStructure, datesArray, calendarOptions);

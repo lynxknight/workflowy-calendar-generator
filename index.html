@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="./dayjs.min.js"></script>
     <script src="./weekOfYear.min.js"></script>
+    <script src="./isoWeek.min.js"></script>
     <script src="./opml.js"></script>
     <script src="./workflowy-calendar-generator.js"></script>
     <meta
@@ -107,6 +108,19 @@
           Week start and end date as note under week heading
         </label>
       </div>
+      <br />
+      <div>
+        <label for="week-start"> Start weeks on </label>
+        <select
+          id="week-start"
+          name="week-start"
+          title="Select the day of the week to start the week on"
+        >
+          <option value="sunday">Sunday</option>
+          <option value="monday">Monday</option>
+        </select>
+      </div>
+      <br />
 
       <input type="submit" value="Generate" onclick="generate()" />
     </form>
