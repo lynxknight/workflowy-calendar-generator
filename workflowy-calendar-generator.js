@@ -100,7 +100,15 @@ function getDateRangeArray(startDate, endDate) {
 }
 
 function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
-  datesArray.forEach((date) => {
+  let arrayToSort;
+
+  if (calendarOptions.sortDescending) {
+    arrayToSort = datesArray.slice().reverse();
+  } else {
+    arrayToSort = datesArray;
+  }
+
+  arrayToSort.forEach((date) => {
     let yearNode, monthNode, weekNode;
 
     if (calendarOptions.year) {
@@ -133,7 +141,12 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
         ? date.endOf("isoWeek")
         : date.endOf("week");
 
-      const weekRange = buildWorkflowyWeekRange(startOfWeek, endOfWeek);
+      let weekRange;
+      if (calendarOptions.sortDescending) {
+        weekRange = buildWorkflowyWeekRange(endOfWeek, startOfWeek);
+      } else {
+        weekRange = buildWorkflowyWeekRange(startOfWeek, endOfWeek);
+      }
       const weekLabel = `Week ${
         calendarOptions.startWeekOnMonday
           ? startOfWeek.isoWeek()
@@ -224,6 +237,7 @@ function generate() {
     week: formData.get("week") === "true",
     weekRange: formData.get("week-range") === "true",
     startWeekOnMonday: formData.get("week-start") === "monday",
+    sortDescending: formData.get("sort") === "desc",
   };
 
   buildOpml(jsonOpmlStructure, datesArray, calendarOptions);
