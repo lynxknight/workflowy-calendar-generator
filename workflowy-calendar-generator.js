@@ -147,7 +147,6 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
 
     if (calendarOptions.monthAndYear) {
       //monthAndYear signifies a date formatted with the month name and then the year for a single heading ex January 2025
-      //write the code to make that happen
       monthAndYearNode = jsonOpmlStructure.opml.body.subs.find(
         (node) => node.text === `${MONTH_NAMES[date.month()]} ${date.year()}`
       );
