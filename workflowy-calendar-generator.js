@@ -2,6 +2,8 @@ let generatedCalendarContainer;
 let calendarOptionsForm;
 let monthCheckbox;
 let weekCheckbox;
+let yearCheckbox;
+let monthAndYearCheckbox;
 
 //structure we need to follow from opml.js
 const jsonOpmlStructure = {
@@ -39,6 +41,38 @@ window.onload = () => {
 
   weekCheckbox = document.getElementById("week");
   monthCheckbox = document.getElementById("month");
+  yearCheckbox = document.getElementById("year");
+  monthAndYearCheckbox = document.getElementById("month-and-year");
+
+  monthAndYearCheckbox.addEventListener("change", function () {
+    if (monthAndYearCheckbox.checked) {
+      monthCheckbox.checked = false;
+      yearCheckbox.checked = false;
+      monthCheckbox.disabled = true;
+      yearCheckbox.disabled = true;
+    } else {
+      monthCheckbox.disabled = false;
+      yearCheckbox.disabled = false;
+    }
+  });
+
+  yearCheckbox.addEventListener("change", function () {
+    if (yearCheckbox.checked || monthCheckbox.checked) {
+      monthAndYearCheckbox.checked = false;
+      monthAndYearCheckbox.disabled = true;
+    } else {
+      monthAndYearCheckbox.disabled = false;
+    }
+  });
+
+  monthCheckbox.addEventListener("change", function () {
+    if (monthCheckbox.checked || yearCheckbox.checked) {
+      monthAndYearCheckbox.checked = false;
+      monthAndYearCheckbox.disabled = true;
+    } else {
+      monthAndYearCheckbox.disabled = false;
+    }
+  });
 
   dayjs.extend(window.dayjs_plugin_weekOfYear);
   dayjs.extend(window.dayjs_plugin_isoWeek);
@@ -109,7 +143,21 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
   }
 
   arrayToSort.forEach((date) => {
-    let yearNode, monthNode, weekNode;
+    let yearNode, monthNode, weekNode, monthAndYearNode;
+
+    if (calendarOptions.monthAndYear) {
+      //monthAndYear signifies a date formatted with the month name and then the year for a single heading ex January 2025
+      monthAndYearNode = jsonOpmlStructure.opml.body.subs.find(
+        (node) => node.text === `${MONTH_NAMES[date.month()]} ${date.year()}`
+      );
+      if (!monthAndYearNode) {
+        monthAndYearNode = {
+          text: `${MONTH_NAMES[date.month()]} ${date.year()}`,
+          subs: [],
+        };
+        jsonOpmlStructure.opml.body.subs.push(monthAndYearNode);
+      }
+    }
 
     if (calendarOptions.year) {
       yearNode = jsonOpmlStructure.opml.body.subs.find(
@@ -188,12 +236,33 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
         }
 
         monthNode = nextMonthNode;
+      } else if (
+        calendarOptions.monthAndYear &&
+        date.month() !== endOfWeek.month() &&
+        date.year() !== endOfWeek.year()
+      ) {
+        let nextMonthAndYearNode = jsonOpmlStructure.opml.body.subs.find(
+          (node) =>
+            node.text ===
+            `${MONTH_NAMES[endOfWeek.month()]} ${endOfWeek.year()}`
+        );
+        if (!nextMonthAndYearNode) {
+          nextMonthAndYearNode = {
+            text: `${MONTH_NAMES[endOfWeek.month()]} ${endOfWeek.year()}`,
+            subs: [],
+          };
+          jsonOpmlStructure.opml.body.subs.push(nextMonthAndYearNode);
+        }
+
+        monthAndYearNode = nextMonthAndYearNode;
       }
       weekNode = (
         monthNode
           ? monthNode.subs
           : yearNode
           ? yearNode.subs
+          : monthAndYearNode
+          ? monthAndYearNode.subs
           : jsonOpmlStructure.opml.body.subs
       ).find((node) => node.text === weekLabel);
       if (!weekNode) {
@@ -206,13 +275,19 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
           ? monthNode.subs
           : yearNode
           ? yearNode.subs
+          : monthAndYearNode
+          ? monthAndYearNode.subs
           : jsonOpmlStructure.opml.body.subs
         ).push(weekNode);
       }
     }
 
     const targetNode =
-      weekNode || monthNode || yearNode || jsonOpmlStructure.opml.body;
+      weekNode ||
+      monthNode ||
+      yearNode ||
+      monthAndYearNode ||
+      jsonOpmlStructure.opml.body;
     targetNode.subs.push({text: buildWorkflowyDateObject(date)});
   });
 }
@@ -235,6 +310,7 @@ function generate() {
     year: formData.get("year") === "true",
     month: formData.get("month") === "true",
     week: formData.get("week") === "true",
+    monthAndYear: formData.get("month-and-year") === "true",
     weekRange: formData.get("week-range") === "true",
     startWeekOnMonday: formData.get("week-start") === "monday",
     sortDescending: formData.get("sort") === "desc",
