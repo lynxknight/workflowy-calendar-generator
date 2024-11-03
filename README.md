@@ -4,4 +4,8 @@ Generate a calendar structure with Workflowy dates. Options include the range of
 
 ![](./media/wf-calendar-demo.gif)
 
-If you aren't looking for Workflowy dates, you can just as easily get a plain text calendar with Python scripts from [Olafbond](https://github.com/olafbond/WorkFlowy-calendar-script/tree/main) or [guidoknoop](https://github.com/guidoknoop/workflowy-calendar-generator).
+If this calendar generator doesn't suit your needs:
+
+- [olafbond's Workflowy Calendar Script](https://github.com/olafbond/WorkFlowy-calendar-script/tree/main) uses Workflowy date objects, and can include a habit tracker or events from your Google Calendar.
+
+- [guidoknoop's Workflowy Calendar Generator](https://github.com/guidoknoop/workflowy-calendar-generator) can create your calendar using plain text dates in any custom date format you want.
