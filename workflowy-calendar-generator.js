@@ -4,6 +4,8 @@ let monthCheckbox;
 let weekCheckbox;
 let yearCheckbox;
 let monthAndYearCheckbox;
+let predefinedItemsTextarea;
+let bigItemsCheckbox;
 
 //structure we need to follow from opml.js
 const jsonOpmlStructure = {
@@ -34,6 +36,18 @@ const MONTH_NAMES = [
 window.onload = () => {
   generatedCalendarContainer = document.getElementById("generated-calendar");
   calendarOptionsForm = document.getElementById("calendar-options");
+  predefinedItemsTextarea = document.getElementById("predefined-items");
+  bigItemsCheckbox = document.getElementById("big-items");
+  bigItemsCheckbox.checked = true;
+
+  // Set default text for predefined items
+  predefinedItemsTextarea.value = `life
+_creatine & omega3
+work
+_prepare
+__understand free time
+__which big items you want to move
+__which meetings you need to prepare for`;
 
   calendarOptionsForm.addEventListener("submit", function (event) {
     event.preventDefault(); // Prevent the default form submission to keep semantic html buttons
@@ -43,6 +57,9 @@ window.onload = () => {
   monthCheckbox = document.getElementById("month");
   yearCheckbox = document.getElementById("year");
   monthAndYearCheckbox = document.getElementById("month-and-year");
+
+  // Set week checkbox as checked by default
+  weekCheckbox.checked = true;
 
   monthAndYearCheckbox.addEventListener("change", function () {
     if (monthAndYearCheckbox.checked) {
@@ -133,8 +150,45 @@ function getDateRangeArray(startDate, endDate) {
   return dateArray;
 }
 
+// Add a helper function to parse indented items and create a hierarchy
+function parseIndentedItems(items) {
+  const result = [];
+  const stack = [{ level: -1, node: { subs: result } }];
+
+  items.forEach(item => {
+    let trimmed = item.trim();
+    if (!trimmed) return; // Skip empty lines
+
+    const leadingUnderscores = item.match(/^_*/)[0].length;
+    const level = Math.floor(leadingUnderscores)
+    trimmed = trimmed.replace(/^_+/, '');
+
+
+    // Create the new node
+    const newNode = {
+      text: trimmed,
+      subs: []
+    };
+
+    // Find the appropriate parent
+    while (stack[stack.length - 1].level >= level) {
+      stack.pop();
+    }
+
+    // Add to parent's subs
+    stack[stack.length - 1].node.subs.push(newNode);
+
+    // Push to stack for potential children
+    stack.push({ level, node: newNode });
+  });
+
+  return result;
+}
+
 function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
   let arrayToSort;
+  const predefinedItems = predefinedItemsTextarea.value.split('\n');
+  const includeBigItems = bigItemsCheckbox.checked;
 
   if (calendarOptions.sortDescending) {
     arrayToSort = datesArray.slice().reverse();
@@ -279,7 +333,32 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
           ? monthAndYearNode.subs
           : jsonOpmlStructure.opml.body.subs
         ).push(weekNode);
+
+        // Add Big Items if enabled
+        if (includeBigItems) {
+          weekNode.subs.push({
+            text: "Big Items",
+            subs: [
+              {
+                text: "life",
+                subs: []
+              },
+              {
+                text: "work",
+                subs: []
+              }
+            ]
+          });
+        }
       }
+    }
+
+    const dateNode = {text: buildWorkflowyDateObject(date), subs: []};
+    
+    // Add predefined items to the date node with hierarchy
+    if (predefinedItems.length > 0) {
+      const parsedItems = parseIndentedItems(predefinedItems);
+      dateNode.subs = parsedItems;
     }
 
     const targetNode =
@@ -288,7 +367,7 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
       yearNode ||
       monthAndYearNode ||
       jsonOpmlStructure.opml.body;
-    targetNode.subs.push({text: buildWorkflowyDateObject(date)});
+    targetNode.subs.push(dateNode);
   });
 }
 /**
@@ -337,4 +416,30 @@ function copyToClipboard() {
 
 function resetOpmlStructure(jsonOpmlStructure) {
   jsonOpmlStructure.opml.body.subs = [];
+}
+
+// Add a helper function to add predefined items to a date node
+function addPredefinedItems(node, items) {
+  if (items && items.length > 0) {
+    if (!node.subs) {
+      node.subs = [];
+    }
+    items.forEach(item => {
+      node.subs.push({
+        text: item.trim(),
+        subs: []
+      });
+    });
+  }
+}
+
+// Add a helper function to add big items to a week node
+function addBigItems(node) {
+  if (!node.subs) {
+    node.subs = [];
+  }
+  node.subs.unshift({
+    text: "Big Items",
+    subs: []
+  });
 }

@@ -50,8 +50,8 @@
       <div>
         <label for="sort">Sort dates</label>
         <select id="sort" name="sort">
-          <option value="asc">Ascending</option>
           <option value="desc">Descending</option>
+          <option value="asc">Ascending</option>
         </select>
       </div>
       <h3>Headings to Include</h3>
@@ -135,9 +135,35 @@
           name="week-start"
           title="Select the day of the week to start the week on"
         >
-          <option value="sunday">Sunday</option>
           <option value="monday">Monday</option>
+          <option value="sunday">Sunday</option>
         </select>
+      </div>
+      <br />
+
+      <h3>Daily Items</h3>
+      <div>
+        <label for="predefined-items">Predefined items for each day (one per line):</label>
+        <textarea 
+          id="predefined-items" 
+          name="predefined-items" 
+          rows="4" 
+          placeholder="Enter items that should appear under each day, one per line"
+        ></textarea>
+      </div>
+      <br />
+
+      <div>
+        <label for="big-items">
+          <input
+            id="big-items"
+            name="big-items"
+            type="checkbox"
+            value="true"
+            title="Add 'Big Items' bullet point at the start of each week"
+          />
+          Add "Big Items" bullet point at the start of each week
+        </label>
       </div>
       <br />
 
