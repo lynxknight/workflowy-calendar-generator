@@ -59,24 +59,8 @@ window.onload = () => {
     localStorage.setItem('predefinedItems', this.value);
   });
 
-  // Set default date range to current week
-  const today = dayjs();
-  const weekStart = weekStartSelect.value === 'monday' ? today.startOf('isoWeek') : today.startOf('week');
-  const weekEnd = weekStartSelect.value === 'monday' ? today.endOf('isoWeek') : today.endOf('week');
-  
-  startDateInput.value = weekStart.format('YYYY-MM-DD');
-  endDateInput.value = weekEnd.format('YYYY-MM-DD');
-
-  // Update dates when week start changes
-  weekStartSelect.addEventListener('change', function() {
-    const weekStart = this.value === 'monday' ? today.startOf('isoWeek') : today.startOf('week');
-    const weekEnd = this.value === 'monday' ? today.endOf('isoWeek') : today.endOf('week');
-    startDateInput.value = weekStart.format('YYYY-MM-DD');
-    endDateInput.value = weekEnd.format('YYYY-MM-DD');
-  });
-
   calendarOptionsForm.addEventListener("submit", function (event) {
-    event.preventDefault(); // Prevent the default form submission to keep semantic html buttons
+    event.preventDefault();
   });
 
   weekCheckbox = document.getElementById("week");
@@ -86,6 +70,32 @@ window.onload = () => {
 
   // Set week checkbox as checked by default
   weekCheckbox.checked = true;
+
+  // Load dayjs plugins first
+  dayjs.extend(window.dayjs_plugin_weekOfYear);
+  dayjs.extend(window.dayjs_plugin_isoWeek);
+
+  // Initialize dates after plugins are loaded
+  function initializeDates() {
+    const today = dayjs();
+    console.log('Initializing dates for:', today.format('YYYY-MM-DD'));
+    
+    const weekStart = weekStartSelect.value === 'monday' ? today.startOf('isoWeek') : today.startOf('week');
+    const weekEnd = weekStartSelect.value === 'monday' ? today.endOf('isoWeek') : today.endOf('week');
+    
+    console.log('Setting week range:', weekStart.format('YYYY-MM-DD'), 'to', weekEnd.format('YYYY-MM-DD'));
+    
+    startDateInput.value = weekStart.format('YYYY-MM-DD');
+    endDateInput.value = weekEnd.format('YYYY-MM-DD');
+  }
+
+  // Set initial dates
+  initializeDates();
+
+  // Update dates when week start changes
+  weekStartSelect.addEventListener('change', function() {
+    initializeDates();
+  });
 
   monthAndYearCheckbox.addEventListener("change", function () {
     if (monthAndYearCheckbox.checked) {
@@ -109,16 +119,13 @@ window.onload = () => {
   });
 
   monthCheckbox.addEventListener("change", function () {
-    if (monthCheckbox.checked || yearCheckbox.checked) {
+    if (monthCheckbox.checked || monthCheckbox.checked) {
       monthAndYearCheckbox.checked = false;
       monthAndYearCheckbox.disabled = true;
     } else {
       monthAndYearCheckbox.disabled = false;
     }
   });
-
-  dayjs.extend(window.dayjs_plugin_weekOfYear);
-  dayjs.extend(window.dayjs_plugin_isoWeek);
 };
 
 /**
