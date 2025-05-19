@@ -52,6 +52,7 @@ window.onload = () => {
 
   // Load predefined items from localStorage or use default
   const savedItems = localStorage.getItem('predefinedItems');
+  console.log(savedItems);
   predefinedItemsTextarea.value = savedItems || DEFAULT_PREDEFINED_ITEMS;
 
   // Save predefined items whenever they change
