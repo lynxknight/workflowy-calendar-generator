@@ -32,22 +32,48 @@ const MONTH_NAMES = [
   "December",
 ];
 
-//grab our containers and set some event listeners that get our app functioning the way we want
-window.onload = () => {
-  generatedCalendarContainer = document.getElementById("generated-calendar");
-  calendarOptionsForm = document.getElementById("calendar-options");
-  predefinedItemsTextarea = document.getElementById("predefined-items");
-  bigItemsCheckbox = document.getElementById("big-items");
-  bigItemsCheckbox.checked = true;
-
-  // Set default text for predefined items
-  predefinedItemsTextarea.value = `life
+const DEFAULT_PREDEFINED_ITEMS = `life
 _creatine & omega3
 work
 _prepare
 __understand free time
 __which big items you want to move
 __which meetings you need to prepare for`;
+
+//grab our containers and set some event listeners that get our app functioning the way we want
+window.onload = () => {
+  generatedCalendarContainer = document.getElementById("generated-calendar");
+  calendarOptionsForm = document.getElementById("calendar-options");
+  predefinedItemsTextarea = document.getElementById("predefined-items");
+  bigItemsCheckbox = document.getElementById("big-items");
+  const startDateInput = document.getElementById("start-date");
+  const endDateInput = document.getElementById("end-date");
+  const weekStartSelect = document.getElementById("week-start");
+
+  // Load predefined items from localStorage or use default
+  const savedItems = localStorage.getItem('predefinedItems');
+  predefinedItemsTextarea.value = savedItems || DEFAULT_PREDEFINED_ITEMS;
+
+  // Save predefined items whenever they change
+  predefinedItemsTextarea.addEventListener('input', function() {
+    localStorage.setItem('predefinedItems', this.value);
+  });
+
+  // Set default date range to current week
+  const today = dayjs();
+  const weekStart = weekStartSelect.value === 'monday' ? today.startOf('isoWeek') : today.startOf('week');
+  const weekEnd = weekStartSelect.value === 'monday' ? today.endOf('isoWeek') : today.endOf('week');
+  
+  startDateInput.value = weekStart.format('YYYY-MM-DD');
+  endDateInput.value = weekEnd.format('YYYY-MM-DD');
+
+  // Update dates when week start changes
+  weekStartSelect.addEventListener('change', function() {
+    const weekStart = this.value === 'monday' ? today.startOf('isoWeek') : today.startOf('week');
+    const weekEnd = this.value === 'monday' ? today.endOf('isoWeek') : today.endOf('week');
+    startDateInput.value = weekStart.format('YYYY-MM-DD');
+    endDateInput.value = weekEnd.format('YYYY-MM-DD');
+  });
 
   calendarOptionsForm.addEventListener("submit", function (event) {
     event.preventDefault(); // Prevent the default form submission to keep semantic html buttons
@@ -442,4 +468,10 @@ function addBigItems(node) {
     text: "Big Items",
     subs: []
   });
+}
+
+// Add function to reset predefined items to default
+function resetPredefinedItems() {
+  predefinedItemsTextarea.value = DEFAULT_PREDEFINED_ITEMS;
+  localStorage.setItem('predefinedItems', DEFAULT_PREDEFINED_ITEMS);
 }
