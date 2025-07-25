@@ -34,7 +34,7 @@ const MONTH_NAMES = [
 
 const DEFAULT_DAILY_PREDEFINED_ITEMS = `life\n_creatine & omega3\nwork\n_prepare\n__understand free time\n__which big items you want to move\n__which meetings you need to prepare for`;
 
-const DEFAULT_BIG_ITEMS_PREDEFINED = `life\n_meditate daily\n_gym twice a week\n_activity rings closed at least 6 days\nwork\npersonal projects`;
+const DEFAULT_BIG_ITEMS_PREDEFINED = `life\n_meditate daily\n_gym twice a week\n_activity rings closed at least 6 days\nwork\n_status_report_written\npersonal projects\n_spent 3h or made significant progress(which one?)`;
 
 //grab our containers and set some event listeners that get our app functioning the way we want
 window.onload = () => {
