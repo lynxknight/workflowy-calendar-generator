@@ -6,6 +6,7 @@ let yearCheckbox;
 let monthAndYearCheckbox;
 let predefinedItemsTextarea;
 let bigItemsCheckbox;
+let bigItemsTemplateTextarea;
 
 //structure we need to follow from opml.js
 const jsonOpmlStructure = {
@@ -40,12 +41,22 @@ __understand free time
 __which big items you want to move
 __which meetings you need to prepare for`;
 
+const DEFAULT_BIG_ITEMS_TEMPLATE = `life
+_meditate daily
+_gym twice a week
+_activity rings closed at least 6 days
+work
+_weekly report written
+personal projects
+_spent at least 4h on personal projects`;
+
 //grab our containers and set some event listeners that get our app functioning the way we want
 window.onload = () => {
   generatedCalendarContainer = document.getElementById("generated-calendar");
   calendarOptionsForm = document.getElementById("calendar-options");
   predefinedItemsTextarea = document.getElementById("predefined-items");
   bigItemsCheckbox = document.getElementById("big-items");
+  bigItemsTemplateTextarea = document.getElementById("big-items-template");
   const startDateInput = document.getElementById("start-date");
   const endDateInput = document.getElementById("end-date");
   const weekStartSelect = document.getElementById("week-start");
@@ -58,6 +69,10 @@ window.onload = () => {
   const savedBigItems = localStorage.getItem('bigItems');
   bigItemsCheckbox.checked = savedBigItems === null ? true : (savedBigItems === 'true');
 
+  // Load big items template from localStorage or use default
+  const savedBigItemsTemplate = localStorage.getItem('bigItemsTemplate');
+  bigItemsTemplateTextarea.value = savedBigItemsTemplate || DEFAULT_BIG_ITEMS_TEMPLATE;
+
   // Save predefined items whenever they change
   predefinedItemsTextarea.addEventListener('input', function() {
     localStorage.setItem('predefinedItems', this.value);
@@ -66,6 +81,11 @@ window.onload = () => {
   // Save big items preference whenever it changes
   bigItemsCheckbox.addEventListener('change', function() {
     localStorage.setItem('bigItems', this.checked);
+  });
+
+  // Save big items template whenever it changes
+  bigItemsTemplateTextarea.addEventListener('input', function() {
+    localStorage.setItem('bigItemsTemplate', this.value);
   });
 
   calendarOptionsForm.addEventListener("submit", function (event) {
@@ -185,8 +205,8 @@ function getDateRangeArray(startDate, endDate) {
 
   let currentDate = dayjs(startDate);
   while (currentDate < endDate) {
-    dateArray.push(currentDate);
     currentDate = currentDate.add(1, "day");
+    dateArray.push(currentDate);
   }
 
   return dateArray;
@@ -231,6 +251,7 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
   let arrayToSort;
   const predefinedItems = predefinedItemsTextarea.value.split('\n');
   const includeBigItems = bigItemsCheckbox.checked;
+  const bigItemsTemplate = bigItemsTemplateTextarea.value.split('\n');
 
   if (calendarOptions.sortDescending) {
     arrayToSort = datesArray.slice().reverse();
@@ -380,16 +401,7 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
         if (includeBigItems) {
           weekNode.subs.push({
             text: "Big Items",
-            subs: [
-              {
-                text: "life",
-                subs: []
-              },
-              {
-                text: "work",
-                subs: []
-              }
-            ]
+            subs: parseIndentedItems(bigItemsTemplate)
           });
         }
       }
@@ -491,3 +503,10 @@ function resetPredefinedItems() {
   predefinedItemsTextarea.value = DEFAULT_PREDEFINED_ITEMS;
   localStorage.setItem('predefinedItems', DEFAULT_PREDEFINED_ITEMS);
 }
+
+// Add function to reset big items to default
+function resetBigItems() {
+  bigItemsTemplateTextarea.value = DEFAULT_BIG_ITEMS_TEMPLATE;
+  localStorage.setItem('bigItemsTemplate', DEFAULT_BIG_ITEMS_TEMPLATE);
+}
+

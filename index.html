@@ -143,14 +143,14 @@
 
       <h3>Daily Items</h3>
       <div>
-        <label for="predefined-items">Predefined items for each day (one per line):</label>
+        <label for="daily-predefined-items">Predefined items for each day (one per line):</label>
         <textarea 
-          id="predefined-items" 
-          name="predefined-items" 
+          id="daily-predefined-items" 
+          name="daily-predefined-items" 
           rows="4" 
           placeholder="Enter items that should appear under each day, one per line"
         ></textarea>
-        <button type="button" id="reset-predefined" onclick="resetPredefinedItems()">Default predefined</button>
+        <button type="button" id="reset-daily-predefined" onclick="resetDailyPredefinedItems()">Default predefined</button>
       </div>
       <br />
 
@@ -165,6 +165,16 @@
           />
           Add "Big Items" bullet point at the start of each week
         </label>
+      </div>
+      <div>
+        <label for="big-items-predefined">Big items template (one per line):</label>
+        <textarea 
+          id="big-items-predefined" 
+          name="big-items-predefined" 
+          rows="4" 
+          placeholder="Enter items that should appear under 'Big Items', one per line"
+        ></textarea>
+        <button type="button" id="reset-big-items-predefined" onclick="resetBigItemsPredefined()">Default big items</button>
       </div>
       <br />
 
