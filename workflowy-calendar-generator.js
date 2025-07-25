@@ -4,9 +4,9 @@ let monthCheckbox;
 let weekCheckbox;
 let yearCheckbox;
 let monthAndYearCheckbox;
-let predefinedItemsTextarea;
+let dailyPredefinedItemsTextarea;
 let bigItemsCheckbox;
-let bigItemsTemplateTextarea;
+let bigItemsPredefinedTextarea;
 
 //structure we need to follow from opml.js
 const jsonOpmlStructure = {
@@ -33,49 +33,36 @@ const MONTH_NAMES = [
   "December",
 ];
 
-const DEFAULT_PREDEFINED_ITEMS = `life
-_creatine & omega3
-work
-_prepare
-__understand free time
-__which big items you want to move
-__which meetings you need to prepare for`;
+const DEFAULT_DAILY_PREDEFINED_ITEMS = `life\n_creatine & omega3\nwork\n_prepare\n__understand free time\n__which big items you want to move\n__which meetings you need to prepare for`;
 
-const DEFAULT_BIG_ITEMS_TEMPLATE = `life
-_meditate daily
-_gym twice a week
-_activity rings closed at least 6 days
-work
-_weekly report written
-personal projects
-_spent at least 4h on personal projects`;
+const DEFAULT_BIG_ITEMS_PREDEFINED = `life\n_meditate daily\n_gym twice a week\n_activity rings closed at least 6 days\nwork\npersonal projects`;
 
 //grab our containers and set some event listeners that get our app functioning the way we want
 window.onload = () => {
   generatedCalendarContainer = document.getElementById("generated-calendar");
   calendarOptionsForm = document.getElementById("calendar-options");
-  predefinedItemsTextarea = document.getElementById("predefined-items");
+  dailyPredefinedItemsTextarea = document.getElementById("daily-predefined-items");
   bigItemsCheckbox = document.getElementById("big-items");
-  bigItemsTemplateTextarea = document.getElementById("big-items-template");
+  bigItemsPredefinedTextarea = document.getElementById("big-items-predefined");
   const startDateInput = document.getElementById("start-date");
   const endDateInput = document.getElementById("end-date");
   const weekStartSelect = document.getElementById("week-start");
 
-  // Load predefined items from localStorage or use default
-  const savedItems = localStorage.getItem('predefinedItems');
-  predefinedItemsTextarea.value = savedItems || DEFAULT_PREDEFINED_ITEMS;
+  // Load daily predefined items from localStorage or use default
+  const savedDailyItems = localStorage.getItem('dailyPredefinedItems');
+  dailyPredefinedItemsTextarea.value = savedDailyItems || DEFAULT_DAILY_PREDEFINED_ITEMS;
 
   // Load big items preference from localStorage or use default
   const savedBigItems = localStorage.getItem('bigItems');
   bigItemsCheckbox.checked = savedBigItems === null ? true : (savedBigItems === 'true');
 
-  // Load big items template from localStorage or use default
-  const savedBigItemsTemplate = localStorage.getItem('bigItemsTemplate');
-  bigItemsTemplateTextarea.value = savedBigItemsTemplate || DEFAULT_BIG_ITEMS_TEMPLATE;
+  // Load big items predefined from localStorage or use default
+  const savedBigItemsPredefined = localStorage.getItem('bigItemsPredefined');
+  bigItemsPredefinedTextarea.value = savedBigItemsPredefined || DEFAULT_BIG_ITEMS_PREDEFINED;
 
-  // Save predefined items whenever they change
-  predefinedItemsTextarea.addEventListener('input', function() {
-    localStorage.setItem('predefinedItems', this.value);
+  // Save daily predefined items whenever they change
+  dailyPredefinedItemsTextarea.addEventListener('input', function() {
+    localStorage.setItem('dailyPredefinedItems', this.value);
   });
 
   // Save big items preference whenever it changes
@@ -83,9 +70,9 @@ window.onload = () => {
     localStorage.setItem('bigItems', this.checked);
   });
 
-  // Save big items template whenever it changes
-  bigItemsTemplateTextarea.addEventListener('input', function() {
-    localStorage.setItem('bigItemsTemplate', this.value);
+  // Save big items predefined whenever it changes
+  bigItemsPredefinedTextarea.addEventListener('input', function() {
+    localStorage.setItem('bigItemsPredefined', this.value);
   });
 
   calendarOptionsForm.addEventListener("submit", function (event) {
@@ -249,9 +236,9 @@ function parseIndentedItems(items) {
 
 function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
   let arrayToSort;
-  const predefinedItems = predefinedItemsTextarea.value.split('\n');
+  const dailyPredefinedItems = dailyPredefinedItemsTextarea.value.split('\n');
   const includeBigItems = bigItemsCheckbox.checked;
-  const bigItemsTemplate = bigItemsTemplateTextarea.value.split('\n');
+  const bigItemsPredefined = bigItemsPredefinedTextarea.value.split('\n');
 
   if (calendarOptions.sortDescending) {
     arrayToSort = datesArray.slice().reverse();
@@ -401,7 +388,7 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
         if (includeBigItems) {
           weekNode.subs.push({
             text: "Big Items",
-            subs: parseIndentedItems(bigItemsTemplate)
+            subs: parseIndentedItems(bigItemsPredefined)
           });
         }
       }
@@ -410,8 +397,8 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
     const dateNode = {text: buildWorkflowyDateObject(date), subs: []};
     
     // Add predefined items to the date node with hierarchy
-    if (predefinedItems.length > 0) {
-      const parsedItems = parseIndentedItems(predefinedItems);
+    if (dailyPredefinedItems.length > 0) {
+      const parsedItems = parseIndentedItems(dailyPredefinedItems);
       dateNode.subs = parsedItems;
     }
 
@@ -499,14 +486,13 @@ function addBigItems(node) {
 }
 
 // Add function to reset predefined items to default
-function resetPredefinedItems() {
-  predefinedItemsTextarea.value = DEFAULT_PREDEFINED_ITEMS;
-  localStorage.setItem('predefinedItems', DEFAULT_PREDEFINED_ITEMS);
+function resetDailyPredefinedItems() {
+  dailyPredefinedItemsTextarea.value = DEFAULT_DAILY_PREDEFINED_ITEMS;
+  localStorage.setItem('dailyPredefinedItems', DEFAULT_DAILY_PREDEFINED_ITEMS);
 }
 
 // Add function to reset big items to default
-function resetBigItems() {
-  bigItemsTemplateTextarea.value = DEFAULT_BIG_ITEMS_TEMPLATE;
-  localStorage.setItem('bigItemsTemplate', DEFAULT_BIG_ITEMS_TEMPLATE);
+function resetBigItemsPredefined() {
+  bigItemsPredefinedTextarea.value = DEFAULT_BIG_ITEMS_PREDEFINED;
+  localStorage.setItem('bigItemsPredefined', DEFAULT_BIG_ITEMS_PREDEFINED);
 }
-
