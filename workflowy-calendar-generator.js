@@ -52,12 +52,20 @@ window.onload = () => {
 
   // Load predefined items from localStorage or use default
   const savedItems = localStorage.getItem('predefinedItems');
-  console.log(savedItems);
   predefinedItemsTextarea.value = savedItems || DEFAULT_PREDEFINED_ITEMS;
+
+  // Load big items preference from localStorage or use default
+  const savedBigItems = localStorage.getItem('bigItems');
+  bigItemsCheckbox.checked = savedBigItems === null ? true : (savedBigItems === 'true');
 
   // Save predefined items whenever they change
   predefinedItemsTextarea.addEventListener('input', function() {
     localStorage.setItem('predefinedItems', this.value);
+  });
+
+  // Save big items preference whenever it changes
+  bigItemsCheckbox.addEventListener('change', function() {
+    localStorage.setItem('bigItems', this.checked);
   });
 
   calendarOptionsForm.addEventListener("submit", function (event) {
