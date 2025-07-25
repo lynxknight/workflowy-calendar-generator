@@ -5,7 +5,6 @@ let weekCheckbox;
 let yearCheckbox;
 let monthAndYearCheckbox;
 let dailyPredefinedItemsTextarea;
-let bigItemsCheckbox;
 let bigItemsPredefinedTextarea;
 
 //structure we need to follow from opml.js
@@ -42,7 +41,6 @@ window.onload = () => {
   generatedCalendarContainer = document.getElementById("generated-calendar");
   calendarOptionsForm = document.getElementById("calendar-options");
   dailyPredefinedItemsTextarea = document.getElementById("daily-predefined-items");
-  bigItemsCheckbox = document.getElementById("big-items");
   bigItemsPredefinedTextarea = document.getElementById("big-items-predefined");
   const startDateInput = document.getElementById("start-date");
   const endDateInput = document.getElementById("end-date");
@@ -52,10 +50,6 @@ window.onload = () => {
   const savedDailyItems = localStorage.getItem('dailyPredefinedItems');
   dailyPredefinedItemsTextarea.value = savedDailyItems || DEFAULT_DAILY_PREDEFINED_ITEMS;
 
-  // Load big items preference from localStorage or use default
-  const savedBigItems = localStorage.getItem('bigItems');
-  bigItemsCheckbox.checked = savedBigItems === null ? true : (savedBigItems === 'true');
-
   // Load big items predefined from localStorage or use default
   const savedBigItemsPredefined = localStorage.getItem('bigItemsPredefined');
   bigItemsPredefinedTextarea.value = savedBigItemsPredefined || DEFAULT_BIG_ITEMS_PREDEFINED;
@@ -63,11 +57,6 @@ window.onload = () => {
   // Save daily predefined items whenever they change
   dailyPredefinedItemsTextarea.addEventListener('input', function() {
     localStorage.setItem('dailyPredefinedItems', this.value);
-  });
-
-  // Save big items preference whenever it changes
-  bigItemsCheckbox.addEventListener('change', function() {
-    localStorage.setItem('bigItems', this.checked);
   });
 
   // Save big items predefined whenever it changes
@@ -151,11 +140,7 @@ window.onload = () => {
  */
 function buildWorkflowyDateObject(date) {
   //months are zero indexed which is super annoying and causes magic numbers in my code :/
-  return `<time 
-    startYear="${date.year()}"
-    startMonth="${date.month() + 1}" 
-    startDay="${date.date()}">date
-    </time>`;
+  return `<time \n    startYear="${date.year()}"\n    startMonth="${date.month() + 1}" \n    startDay="${date.date()}">date\n    </time>`;
 }
 
 /**
@@ -165,14 +150,7 @@ function buildWorkflowyDateObject(date) {
  */
 
 function buildWorkflowyWeekRange(startDate, endDate) {
-  return `<time
-    startYear="${startDate.year()}"
-    startMonth="${startDate.month() + 1}"
-    startDay="${startDate.date()}"
-    endYear="${endDate.year()}"
-    endMonth="${endDate.month() + 1}"
-    endDay="${endDate.date()}">week range
-    </time>`;
+  return `<time\n    startYear="${startDate.year()}"\n    startMonth="${startDate.month() + 1}"\n    startDay="${startDate.date()}"\n    endYear="${endDate.year()}"\n    endMonth="${endDate.month() + 1}"\n    endDay="${endDate.date()}">week range\n    </time>`;
 }
 
 //write a function that takes in two date objects, start date and end date. generates an array of date objects between the two dates, including the start date and end date
@@ -237,7 +215,6 @@ function parseIndentedItems(items) {
 function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
   let arrayToSort;
   const dailyPredefinedItems = dailyPredefinedItemsTextarea.value.split('\n');
-  const includeBigItems = bigItemsCheckbox.checked;
   const bigItemsPredefined = bigItemsPredefinedTextarea.value.split('\n');
 
   if (calendarOptions.sortDescending) {
@@ -384,13 +361,11 @@ function buildOpml(jsonOpmlStructure, datesArray, calendarOptions) {
           : jsonOpmlStructure.opml.body.subs
         ).push(weekNode);
 
-        // Add Big Items if enabled
-        if (includeBigItems) {
-          weekNode.subs.push({
-            text: "Big Items",
-            subs: parseIndentedItems(bigItemsPredefined)
-          });
-        }
+        // Add Big Items
+        weekNode.subs.push({
+          text: "Big Items",
+          subs: parseIndentedItems(bigItemsPredefined)
+        });
       }
     }
 
