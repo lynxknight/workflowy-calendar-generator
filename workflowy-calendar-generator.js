@@ -163,15 +163,15 @@ function buildWorkflowyWeekRange(startDate, endDate) {
 function getDateRangeArray(startDate, endDate) {
   const dateArray = [];
 
-  if (endDate < startDate) {
+  if (endDate.isBefore(startDate)) {
     alert("End date must be after start date");
     return;
   }
 
   let currentDate = dayjs(startDate);
-  while (currentDate < endDate) {
-    currentDate = currentDate.add(1, "day");
+  while (currentDate.isBefore(endDate) || currentDate.isSame(endDate)) {
     dateArray.push(currentDate);
+    currentDate = currentDate.add(1, "day");
   }
 
   return dateArray;
